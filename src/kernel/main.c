@@ -39,6 +39,11 @@ PUBLIC void main()
   /* Initialize the interrupt controller. */
   intr_init(1);
 
+#if ENABLE_RTL_UMB
+  /* Enable RTL8019AS upper memory */
+  umb_init();
+#endif
+
   /* Interpret memory sizes. */
   mem_init();
 

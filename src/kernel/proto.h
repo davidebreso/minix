@@ -121,6 +121,7 @@ _PROTOTYPE( void milli_delay, (unsigned millisec)			);
 _PROTOTYPE( void cons_stop, (void)					);
 _PROTOTYPE( void putk, (int c)						);
 _PROTOTYPE( void scr_init, (struct tty *tp)				);
+_PROTOTYPE( void cons_dmp, (void)					);
 _PROTOTYPE( void toggle_scroll, (void)					);
 _PROTOTYPE( int con_loadfont, (phys_bytes user_phys)			);
 _PROTOTYPE( void select_console, (int cons_line)			);
@@ -174,6 +175,7 @@ _PROTOTYPE( void monitor, (void)					);
 
 /* misc.c */
 _PROTOTYPE( void mem_init, (void)					);
+_PROTOTYPE( void umb_init, (void)       				);
 
 /* mpx*.s */
 _PROTOTYPE( void idle_task, (void)					);

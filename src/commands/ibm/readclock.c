@@ -59,6 +59,9 @@ int y2kflag = 0;	/* Interpret 1980 as 2000 for clock with Y2K bug. */
 #define PC_AT		   0xFC		/* Machine ID byte for PC/AT,
 					   PC/XT286, and PS/2 Models 50, 60 */
 #define PS_386		   0xF8		/* Machine ID byte for PS/2 Model 80 */
+#define PC_XT		   0xFE		/* Machine ID byte for IBM/XT and
+					   various clones */
+
 
 /* Manufacturers usually use the ID value of the IBM model they emulate.
  * However some manufacturers, notably HP and COMPAQ, have had different
@@ -98,7 +101,7 @@ int main(int argc, char **argv)
 		|| read(mem, (void *) &mach_id, sizeof(mach_id)) < 0) {
 	mach_id = -1;
   }
-  if (mach_id != PS_386 && mach_id != PC_AT) {
+  if (mach_id != PS_386 && mach_id != PC_AT && mach_id != PC_XT) {
 	errmsg( "Machine ID unknown." );
 	fprintf( stderr, "Machine ID byte = %02x\n", mach_id );
 

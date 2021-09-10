@@ -65,19 +65,20 @@
 #define LINEWRAP           1	/* console.c - wrap lines at column 80 */
 #define ALLOW_GAP_MESSAGES 1	/* proc.c - allow messages in the gap between
 				 * the end of bss and lowest stack address */
+#define ENABLE_RTL_UMB	   1	/* enable RTL8019AS SRAM */
 
 /* Enable or disable the second level file system cache on the RAM disk. */
-#define ENABLE_CACHE2      1
+#define ENABLE_CACHE2      0
 
 /* Include or exclude device drivers.  Set to 1 to include, 0 to exclude. */
-#define ENABLE_AT_WINI     1	/* enable AT winchester driver */
+#define ENABLE_AT_WINI     0	/* enable AT winchester driver */
 #define ENABLE_BIOS_WINI   1	/* enable BIOS winchester driver */
-#define ENABLE_ESDI_WINI   1	/* enable ESDI winchester driver */
+#define ENABLE_ESDI_WINI   0	/* enable ESDI winchester driver */
 #define ENABLE_XT_WINI     0	/* enable XT winchester driver */
-#define ENABLE_AHA1540_SCSI 1	/* enable Adaptec 1540 SCSI driver */
+#define ENABLE_AHA1540_SCSI 0	/* enable Adaptec 1540 SCSI driver */
 #define ENABLE_MITSUMI_CDROM 0	/* enable Mitsumi CD-ROM driver */
 #define ENABLE_DOSFAT      0	/* enable DOS FAT file virtual disk driver */
-#define ENABLE_DOSFILE     1	/* enable DOS file virtual disk driver */
+#define ENABLE_DOSFILE     0	/* enable DOS file virtual disk driver */
 #define ENABLE_SB_AUDIO    0	/* enable Soundblaster audio driver */
 
 /* DMA_SECTORS may be increased to speed up DMA based drivers. */
@@ -85,9 +86,9 @@
 
 /* Enable or disable networking code (TCP/IP task & drivers). */
 #define ENABLE_NETWORKING  0	/* enable TCP/IP code (main switch) */
-#define ENABLE_WDETH       1	/* enable Western Digital WD80x3 */
-#define ENABLE_NE2000      1	/* enable Novell NE1000/NE2000 */
-#define ENABLE_3C503       1	/* enable 3Com Etherlink II (3C503) */
+#define ENABLE_WDETH       0	/* enable Western Digital WD80x3 */
+#define ENABLE_NE2000      0 	/* enable Novell NE1000/NE2000 */
+#define ENABLE_3C503       0 	/* enable 3Com Etherlink II (3C503) */
 
 /* Include or exclude backwards compatibility code. */
 #define ENABLE_BINCOMPAT   0	/* for binaries using obsolete calls */
@@ -100,7 +101,7 @@
  * system can handle.
  */
 #define NR_CONS            2	/* # system consoles (1 to 8) */
-#define	NR_RS_LINES	   2	/* # rs232 terminals (0, 1, or 2) */
+#define	NR_RS_LINES	   0	/* # rs232 terminals (0, 1, or 2) */
 #define	NR_PTYS		   0	/* # pseudo terminals (0 to 64) */
 
 #if (MACHINE == ATARI)

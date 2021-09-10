@@ -1,0 +1,11 @@
+CHANGES:
+ - adds 0xFE to the known machine IDs in readclock to support PC5086 RTC
+ - replace "rep movs" with explicit loop in vid_vid_copy to fix text scrolling bug
+ - add F4 hotkey to print console status dump
+ - adds support for RTL8019AS network card upper memory
+ - set defaults in config.h for a PC5086 small kernel
+TO DO:
+ - investigate more the text scrolling bug
+ - find a better solution to support RTC. The current code will try (and may fail...) 
+   to read the RTC any XT machine. A command line option would be a better solution.
+ - start working on the ne2000 driver to support 8-bit mode

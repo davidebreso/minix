@@ -417,6 +417,7 @@ int scode;			/* scan code for a function key */
   case F1:	p_dmp(); break;		/* print process table */
   case F2:	map_dmp(); break;	/* print memory map */
   case F3:	toggle_scroll(); break;	/* hardware vs. software scrolling */
+  case F4:	cons_dmp(); break;	/* console statistics */
 
 #if ENABLE_NETWORKING
   case F5:	dp_dump(); break;		/* network statistics */

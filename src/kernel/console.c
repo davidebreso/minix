@@ -303,7 +303,7 @@ int dir;			/* SCROLL_UP or SCROLL_DOWN */
   unsigned new_line, new_org, chars;
 
   flush(cons);
-  chars = scr_size - scr_width;		/* one screen minus one line */
+  chars = 80*24; /* scr_size - scr_width; one screen minus one line */
 
   /* Scrolling the screen is a real nuisance due to the various incompatible
    * video cards.  This driver supports software scrolling (Hercules?),
@@ -846,7 +846,6 @@ int c;				/* character to print */
   }
 }
 
-
 /*===========================================================================*
  *				toggle_scroll				     *
  *===========================================================================*/
@@ -857,6 +856,26 @@ PUBLIC void toggle_scroll()
   cons_org0();
   softscroll = !softscroll;
   printf("%sware scrolling enabled.\n", softscroll ? "Soft" : "Hard");
+}
+
+/*============================================================================*
+ *                              cons_dmp                		      *
+ *============================================================================*/
+PUBLIC void cons_dmp()
+{
+/* Print console status to screen for debug purposes. */
+  printf("\n===========================================================\n");
+  printf("column: %d\trow: %d\twords in outqueue: %d\n", 
+  	curcons->c_column, curcons->c_row, curcons->c_rwords);
+  printf("video memory start: %x\tlimit: %x\torigin: %x\tcursor: %x\n",
+  	curcons->c_start, curcons->c_limit, curcons->c_org, curcons->c_cur);
+  printf("ega: %d\twrap: %d\tsoftscroll: %d\n",
+  	ega, wrap, softscroll);
+  printf("video port: %x\tscreen width: %d\tlines: %d\tsize: %d\n",
+  	vid_port, scr_width, scr_lines, scr_size);
+  printf("video ram segment: %x\tsize: %x\tmask: %x\n",
+  	vid_seg, vid_size, vid_mask);
+  printf("=============================================================\n");
 }
 
 

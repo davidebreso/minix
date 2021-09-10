@@ -16,6 +16,38 @@
 #define MAX_86ADDR	0x00100000L
 #define MAX_286ADDR	0x01000000L
 
+#if ENABLE_RTL_UMB
+/*========================================================================*
+ *                              umb_init                                  *
+ *========================================================================*/
+PUBLIC void umb_init()
+{
+/* Initialize UMBs on the RTL8019AS network card. */
+  long regbase;
+  int reg;
+  static char env[] = "RTLUMB";
+  static char fmt[] = "x";
+
+  if(env_parse(env, fmt, 0, &regbase, 0L, 0xFFFL) == EP_SET)
+  {
+    /* Enables "flash write operations" by writing the magic sequence
+     * 0x057 0x0A8 to the FMWP register.
+     */
+     reg = in_byte(regbase);	/* Read configuration register 		*/
+     reg |= 0xC0;		/* Select register page 3		*/
+     out_byte(regbase, reg);
+     reg = in_byte(regbase+1);	/* Read command register (regbase+1)	*/
+     reg |= 0xC0;		/* Set config register write enable	*/
+     out_byte(regbase+1, reg);
+     out_byte(regbase+0xC, 0x57);	/* Write magic sequence to	*/
+     out_byte(regbase+0xC, 0xA8);	/* FMWP register		*/
+     reg = in_byte(regbase+1);	/* Read command register (regbase + 1)	*/
+     reg &= 0x3F;		/* Disable config register writes	*/
+     out_byte(regbase+1, reg);
+  }
+}
+#endif /* ENABLE_RTL_UMB */
+
 /*=========================================================================*
  *				mem_init				   *
  *=========================================================================*/
