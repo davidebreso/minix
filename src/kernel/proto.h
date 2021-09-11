@@ -227,6 +227,9 @@ _PROTOTYPE( void level0_call, (void) );
 /* ne2000.c */
 _PROTOTYPE( int ne_probe, (struct dpeth *dep)				);
 
+/* ne2000xt.c */
+_PROTOTYPE( int next_probe, (struct dpeth *dep)				);
+
 /* printer.c */
 _PROTOTYPE( void pr_restart, (void)					);
 

@@ -88,6 +88,7 @@
 #define ENABLE_NETWORKING  0	/* enable TCP/IP code (main switch) */
 #define ENABLE_WDETH       0	/* enable Western Digital WD80x3 */
 #define ENABLE_NE2000      0 	/* enable Novell NE1000/NE2000 */
+#define ENABLE_NE2XT       0 	/* enable Novell NE2000 on a 8-bit slot */
 #define ENABLE_3C503       0 	/* enable 3Com Etherlink II (3C503) */
 
 /* Include or exclude backwards compatibility code. */

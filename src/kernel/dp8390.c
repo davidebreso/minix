@@ -104,6 +104,9 @@ extern int ___dummy[DE_PORT_NR == sizeof(dp_conf)/sizeof(dp_conf[0]) ? 1 : -1];
 #if !ENABLE_NE2000
 #define ne_probe(dep)		(0)
 #endif
+#if !ENABLE_NE2XT
+#define next_probe(dep)	(0)
+#endif
 #if !ENABLE_3C503
 #define el2_probe(dep)		(0)
 #endif
@@ -1616,7 +1619,7 @@ dpeth_t *dep;
 	update_conf(dep, dcp);
 	if (dep->de_mode != DEM_ENABLED)
 			return;
-	if (!wdeth_probe(dep) && !ne_probe(dep) && !el2_probe(dep))
+	if (!wdeth_probe(dep) && !ne_probe(dep) && !next_probe(dep) && !el2_probe(dep))
 	{
 		printf("%s: No ethernet card found at 0x%x\n", 
 			dep->de_name, dep->de_base_port);
