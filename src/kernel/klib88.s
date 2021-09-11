@@ -876,13 +876,11 @@ vvc_uploop:
 0:	sub	dx, cx			! count -= cx
 	shl	si, #1
 	shl	di, #1			! byte addresses
-movs_loop:
-	test	cx, cx
-	jz	movs_done		! no more words to copy	
-   eseg movs				! copy video words 
-   	dec	cx
-   	jmp	movs_loop
-movs_done:
+	mov	bx, ds			! save DS
+	mov	ds, _vid_seg		! use video segment
+	rep
+	movs				! copy video words
+	mov	ds, bx			! restore DS
 	shr	si, #1
 	shr	di, #1			! word addresses
 	test	dx, dx
@@ -909,13 +907,11 @@ vvc_downloop:
 0:	sub	dx, cx			! count -= cx
 	shl	si, #1
 	shl	di, #1			! byte addresses
-movd_loop:
-	test	cx, cx
-	jz	movd_done
-   eseg	movs				! copy video words
-   	dec	cx
-   	jmp	movd_loop
-movd_done:
+	mov	bx, ds			! save DS
+	mov	ds, _vid_seg		! use video segment
+	rep
+	movs				! copy video words
+	mov	ds, bx			! restore DS
 	shr	si, #1
 	shr	di, #1			! word addresses
 	test	dx, dx

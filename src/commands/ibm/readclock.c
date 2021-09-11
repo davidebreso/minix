@@ -53,14 +53,13 @@ int nflag = 0;		/* Tell what, but don't do it. */
 int wflag = 0;		/* Set the CMOS clock. */
 int Wflag = 0;		/* Also set the CMOS clock register bits. */
 int y2kflag = 0;	/* Interpret 1980 as 2000 for clock with Y2K bug. */
+int iflag = 0;		/* Do not check for machine ID. */
 
 #define MACH_ID_ADDR	0xFFFFE		/* BIOS Machine ID at FFFF:000E */
 
 #define PC_AT		   0xFC		/* Machine ID byte for PC/AT,
 					   PC/XT286, and PS/2 Models 50, 60 */
 #define PS_386		   0xF8		/* Machine ID byte for PS/2 Model 80 */
-#define PC_XT		   0xFE		/* Machine ID byte for IBM/XT and
-					   various clones */
 
 
 /* Manufacturers usually use the ID value of the IBM model they emulate.
@@ -97,15 +96,39 @@ int main(int argc, char **argv)
 	errmsg( "Permission denied." );
 	exit(1);
   }
-  if (lseek(mem, (off_t) MACH_ID_ADDR, SEEK_SET) == -1
-		|| read(mem, (void *) &mach_id, sizeof(mach_id)) < 0) {
-	mach_id = -1;
-  }
-  if (mach_id != PS_386 && mach_id != PC_AT && mach_id != PC_XT) {
-	errmsg( "Machine ID unknown." );
-	fprintf( stderr, "Machine ID byte = %02x\n", mach_id );
 
-	exit(1);
+  /* Process options. */
+  while (argc > 1) {
+	char *p = *++argv;
+
+	if (*p++ != '-') usage();
+
+	while (*p != 0) {
+		switch (*p++) {
+		case 'n':	nflag = 1;	break;
+		case 'w':	wflag = 1;	break;
+		case 'W':	Wflag = 1;	break;
+		case '2':	y2kflag = 1;	break;
+		case 'i':	iflag = 1;	break;
+		default:	usage();
+		}
+	}
+	argc--;
+  }
+  if (Wflag) wflag = 1;		/* -W implies -w */
+
+  /* Check machine ID if iflag is not set. Otherwise, skip and go on */
+  if(!iflag) {
+	if (lseek(mem, (off_t) MACH_ID_ADDR, SEEK_SET) == -1
+			|| read(mem, (void *) &mach_id, sizeof(mach_id)) < 0) {
+		mach_id = -1;
+	}
+	if (mach_id != PS_386 && mach_id != PC_AT) {
+		errmsg( "Machine ID unknown." );
+		fprintf( stderr, "Machine ID byte = %02x\n", mach_id );
+
+		exit(1);
+	}
   }
   cmos_state = read_register(CMOS_STATUS);
   if (cmos_state & (CS_LOST_POWER | CS_BAD_CHKSUM | CS_BAD_TIME)) {
@@ -120,25 +143,6 @@ int main(int argc, char **argv)
 	    errmsg( "Time invalid in CMOS RAM. Reset clock." );
 	exit(1);
   }
-
-  /* Process options. */
-  while (argc > 1) {
-	char *p = *++argv;
-
-	if (*p++ != '-') usage();
-
-	while (*p != 0) {
-		switch (*p++) {
-		case 'n':	nflag = 1;	break;
-		case 'w':	wflag = 1;	break;
-		case 'W':	Wflag = 1;	break;
-		case '2':	y2kflag = 1;	break;
-		default:	usage();
-		}
-	}
-	argc--;
-  }
-  if (Wflag) wflag = 1;		/* -W implies -w */
 
   /* Read the CMOS real time clock. */
   for (i = 0; i < 10; i++) {
@@ -380,6 +384,6 @@ int dec_to_bcd(int n)
 
 void usage(void)
 {
-  fprintf(stderr, "Usage: readclock [-nwW2]\n");
+  fprintf(stderr, "Usage: readclock [-nwW2i]\n");
   exit(1);
 }
