@@ -303,7 +303,7 @@ int dir;			/* SCROLL_UP or SCROLL_DOWN */
   unsigned new_line, new_org, chars;
 
   flush(cons);
-  chars = 80*24; /* scr_size - scr_width; one screen minus one line */
+  chars = scr_size - scr_width;	/* one screen minus one line */
 
   /* Scrolling the screen is a real nuisance due to the various incompatible
    * video cards.  This driver supports software scrolling (Hercules?),
