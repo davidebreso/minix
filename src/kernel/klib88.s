@@ -468,8 +468,12 @@ _port_read:
 	shr	cx,#1		! count in words
 	mov	di,bx		! di = destination offset
 	mov	es,ax		! es = destination segment
-	rep
-	ins
+	! rep
+	! ins
+read_loop:
+	inw			! get a word
+	stosw			! save a word
+	loop	read_loop
 
 	pop	es
 	pop	di
@@ -508,8 +512,12 @@ _port_read_byte:
 	call	portio_setup
 	mov	di,bx		! di = destination offset
 	mov	es,ax		! es = destination segment
-	rep
-	insb
+	! rep
+	! insb
+read_byte_loop:
+	inb			! read a byte
+	stosb			! save a byte
+	loop	read_byte_loop
 
 	pop	es
 	pop	di
@@ -533,8 +541,12 @@ _port_write:
 	shr	cx,#1		! count in words
 	mov	si,bx		! si = source offset
 	mov	ds,ax		! ds = source segment
-	rep
-	outs
+	! rep
+	! outs
+write_loop:
+	lodsw			! get a word
+	outw			! write a word
+	loop	write_loop
 
 	pop	ds
 	pop	si
@@ -558,8 +570,12 @@ _port_write_byte:
 	call	portio_setup
 	mov	si,bx		! si = source offset
 	mov	ds,ax		! ds = source segment
-	rep
-	outsb
+	! rep
+	! outsb
+write_byte_loop:
+	lodsb			! get a byte
+	outb			! write a byte
+	loop	write_byte_loop
 
 	pop	ds
 	pop	si

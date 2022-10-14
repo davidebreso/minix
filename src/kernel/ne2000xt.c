@@ -42,51 +42,38 @@ dpeth_t *dep;
 	testf_t f;
 
 	dep->de_dp8390_port= dep->de_base_port + NE_DP8390;
-	printf("Probing NE2000 at base port %x\n", dep->de_base_port);
 	/* We probe for an ne2000 by testing whether the board is 
 	 * reachable through the dp8390. Note that the driver assumes
-	 * the card is in in an 8 bit ISA slot
+	 * the card is in an 8bit ISA slot
 	 */
 
 	dep->de_16bit= 0;	/* Set 8 bit mode */
 	/* Reset the ethernet card */
-	printf("Reset card\n");
-	printf("read register %x\n", NE_RESET);
 	byte= inb_ne(dep, NE_RESET);
 	milli_delay(2);
-	printf("write %x to register %x\n", byte, NE_RESET);
 	outb_ne(dep, NE_RESET, byte);
 	milli_delay(2);
 
 	/* Reset the dp8390 */
-	printf("Reset the dp8390\nWrite %x to dp8390 register %x\n",
-		CR_STP|CR_DM_ABORT, DP_CR);
 	outb_reg0(dep, DP_CR, CR_STP | CR_DM_ABORT);
 	for (i= 0; i < 0x1000 && ((inb_reg0(dep, DP_ISR) & ISR_RST) == 0); i++)
 		; /* Do nothing */
 
 	/* Check if the dp8390 is really there */
-	printf("Check if the dp8390 is really there\n");
 	if ((inb_reg0(dep, DP_CR) & (CR_STP|CR_DM_ABORT)) !=
 		(CR_STP|CR_DM_ABORT))
 	{
-		printf("Failed. Return 0\n");
 		return 0;
 	}
 
 	/* Put it in loop-back mode */
-	printf("Put the dp8390 in loopback mode\n");
 	outb_reg0(dep, DP_RCR, RCR_MON);
 	outb_reg0(dep, DP_TCR, TCR_NORMAL);
-	printf("8 bit: write %x to dp8390 register %x\n",
-		DCR_BYTEWIDE | DCR_8BYTES | DCR_BMS, DP_DCR);
 	outb_reg0(dep, DP_DCR, DCR_BYTEWIDE | DCR_8BYTES |
 		DCR_BMS);
 
 	loc1= NE2000_START;
 	loc2= NE2000_START + NE2000_SIZE - 4;
-	printf("8 bit: set test8 on memory %x and %x\n",
-		loc1, loc2);
 	f= test_8;
 	if (f(dep, loc1, pat0) && f(dep, loc1, pat1) &&
 		f(dep, loc1, pat2) && f(dep, loc1, pat3) &&
@@ -94,14 +81,12 @@ dpeth_t *dep;
 		f(dep, loc2, pat2) && f(dep, loc2, pat3))
 	{
 		/* We don't need a memory segment */
-		printf("test passed, return 1\n");
 		dep->de_linmem= 0;
 		dep->de_initf= next_init;
 		dep->de_stopf= next_stop;
 		dep->de_prog_IO= 1;
 		return 1;
 	}
-	printf("test failed, return 0\n");
 	return 0;
 }
 
@@ -117,7 +102,6 @@ u8_t *pat;
 	u8_t buf[4];
 	int i;
 	int r;
-	printf("Executing test8\n");
 	outb_reg0(dep, DP_ISR, 0xFF);
 
 	/* Setup a transfer to put the pattern. */
@@ -127,13 +111,10 @@ u8_t *pat;
 	outb_reg0(dep, DP_RSAR1, pos >> 8);
 	outb_reg0(dep, DP_CR, CR_DM_RW | CR_PS_P0 | CR_STA);
 
-	printf("Sending pattern ");
 	for (i= 0; i<4; i++)
 	{
-		printf("%x ", pat[i]);
 		outb_ne(dep, NE_DATA, pat[i]);
 	}
-	printf("\n");
 	for (i= 0; i<N; i++)
 	{
 		if (inb_reg0(dep, DP_ISR) & ISR_RDC)
@@ -141,7 +122,7 @@ u8_t *pat;
 	}
 	if (i == N)
 	{
-		if (1) /* (debug) */
+		if (debug) 
 		{
 			printf("%s: NE2000 remote DMA test failed\n",
 				dep->de_name);
@@ -155,15 +136,11 @@ u8_t *pat;
 	outb_reg0(dep, DP_RSAR1, pos >> 8);
 	outb_reg0(dep, DP_CR, CR_DM_RR | CR_PS_P0 | CR_STA);
 	
-	printf("Receiving pattern ");
 	for (i= 0; i<4; i++)
 	{
 		buf[i]= inb_ne(dep, NE_DATA);
-		printf("%x ", buf[i]);
 	}
-	printf("\n");
 	r= (memcmp(buf, pat, 4) == 0);
-	printf("Return %d", r);
 	return r;
 }
 
@@ -180,38 +157,19 @@ dpeth_t *dep;
 	int word, sendq_nr;
 
 	/* Setup a transfer to get the ethernet address. */
-	if (dep->de_16bit)
-		outb_reg0(dep, DP_RBCR0, 6*2);
-	else
-		outb_reg0(dep, DP_RBCR0, 6);
+	outb_reg0(dep, DP_RBCR0, 12); /* byte count is doubled */
 	outb_reg0(dep, DP_RBCR1, 0);
 	outb_reg0(dep, DP_RSAR0, 0);
 	outb_reg0(dep, DP_RSAR1, 0);
 	outb_reg0(dep, DP_CR, CR_DM_RR | CR_PS_P0 | CR_STA);
-
 	for (i= 0; i<6; i++)
 	{
-		if (dep->de_16bit)
-		{
-			word= inw_ne(dep, NE_DATA);
-			dep->de_address.ea_addr[i]= word;
-		}
-		else
-		{
-			dep->de_address.ea_addr[i] = inb_ne(dep, NE_DATA);
-		}
+		dep->de_address.ea_addr[i] = inb_ne(dep, NE_DATA);
+		inb_ne(dep, NE_DATA);	/* Skip next byte */ 
 	}
-	dep->de_data_port= dep->de_base_port + NE_DATA;
-	if (dep->de_16bit)
-	{
-		dep->de_ramsize= NE2000_SIZE;
-		dep->de_offset_page= NE2000_START / DP_PAGESIZE;
-	}
-	else
-	{
-		dep->de_ramsize= NE2000_SIZE;
-		dep->de_offset_page= NE2000_START / DP_PAGESIZE;
-	}
+	dep->de_data_port= dep->de_base_port + NE_DATA; 
+	dep->de_ramsize= NE2000_SIZE;
+	dep->de_offset_page= NE2000_START / DP_PAGESIZE;
 
 	/* Allocate one send buffer (1.5KB) per 8KB of on board memory. */
 	sendq_nr= dep->de_ramsize / 0x2000;
