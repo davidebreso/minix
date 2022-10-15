@@ -37,7 +37,7 @@
 #define ROBUST             0	/* 0 for speed, 1 for robustness */
 
 /* Number of slots in the process table for user processes. */
-#define NR_PROCS          32
+#define NR_PROCS          40
 
 /* The buffer cache should be made as large as you can afford. */
 #if (MACHINE == IBM_PC && _WORD_SIZE == 2)

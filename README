@@ -9,10 +9,10 @@ CHANGES:
  - added F4 hotkey to print console status dump
  - added support for RTL8019AS network card upper memory
  - set defaults in config.h for a PC5086 small kernel
- - added the ne2000xt driver for a NE2000 card in a 8-bit slot. The current code
-   is a copy of ne2000.c that prints some debug information
+ - removed 186 instructions from real mode assembly code
+ - added the ne2000xt driver for a NE2000 card in a 8-bit slot
  
 TO DO:
- - complete the ne2000xt driver to support the NE2000 card in a 8-bit slot
+ - test and bugfix the ne2000xt driver
+ - unify code of the two NE2000 drivers
  - setup and test networking on the PC5086
- - backport dhcpd from Minix 2.0.4

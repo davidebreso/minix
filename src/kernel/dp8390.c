@@ -387,9 +387,7 @@ int vectored;
 	 * will be sent after all interrupts are handled. 
 	 */
 	if (from_int)
-	{
 		return;
-	}
 	reply(dep, OK, FALSE);
 
 	assert(dep->de_mode == DEM_ENABLED);
@@ -634,9 +632,8 @@ dpeth_t *dep;
 	{
 		printf("%s: Ethernet address ", dep->de_name);
 		for (i= 0; i < 6; i++)
-			printf("%02x%c", dep->de_address.ea_addr[i],
+			printf("%x%c", dep->de_address.ea_addr[i],
 							i < 5 ? ':' : '\n');
-		printf("%s: Data port 0x%x\n", dep->de_name,dep->de_data_port);
 	}
 
 	/* Initialization of the dp8390 */
@@ -647,11 +644,10 @@ dpeth_t *dep;
 	outb_reg0(dep, DP_BNRY, dep->de_startpage);
 	outb_reg0(dep, DP_RCR, RCR_MON);
 	outb_reg0(dep, DP_TCR, TCR_NORMAL);
-	if (dep->de_16bit) {
+	if (dep->de_16bit)
 		outb_reg0(dep, DP_DCR, DCR_WORDWIDE | DCR_8BYTES | DCR_BMS);
-	} else {
+	else
 		outb_reg0(dep, DP_DCR, DCR_BYTEWIDE | DCR_8BYTES | DCR_BMS);
-	}
 	outb_reg0(dep, DP_RBCR0, 0);
 	outb_reg0(dep, DP_RBCR1, 0);
 	outb_reg0(dep, DP_ISR, 0xFF);
@@ -700,32 +696,24 @@ dpeth_t *dep;
 	dep->de_sendq_tail= 0;
 	if (!dep->de_prog_IO)
 	{
-		if(debug)
-			printf("%s: PIO mode not set\n", dep->de_name);
 		dep->de_user2nicf= dp_user2nic;
 		dep->de_nic2userf= dp_nic2user;
 		dep->de_getblockf= dp_getblock;
 	}
 	else if (dep->de_16bit)
 	{
-		if(debug)
-			printf("%s: 16 bit PIO mode\n", dep->de_name);
 		dep->de_user2nicf= dp_pio16_user2nic;
 		dep->de_nic2userf= dp_pio16_nic2user;
 		dep->de_getblockf= dp_pio16_getblock;
 	}
 	else
 	{
-		if(debug)
-			printf("%s: 8 bit PIO mode\n", dep->de_name);
 		dep->de_user2nicf= dp_pio8_user2nic;
 		dep->de_nic2userf= dp_pio8_nic2user;
 		dep->de_getblockf= dp_pio8_getblock;
 	}
 
 	/* set the interrupt handler */
-	if(debug)
-		printf("%s: Set handler for interrupt %d\n", dep->de_name, dep->de_irq);
 	put_irq_handler(dep->de_irq, dp_handler);
 	enable_irq(dep->de_irq);
 }
@@ -1234,7 +1222,6 @@ vir_bytes count;
 
 	outb_reg0(dep, DP_ISR, ISR_RDC);
 
-	outb_reg0(dep, DP_CR, CR_DM_ABORT | CR_PS_P0 | CR_STA);
 	outb_reg0(dep, DP_RBCR0, count & 0xFF);
 	outb_reg0(dep, DP_RBCR1, count >> 8);
 	outb_reg0(dep, DP_RSAR0, nic_addr & 0xFF);
@@ -1276,7 +1263,7 @@ vir_bytes count;
 		if (inb_reg0(dep, DP_ISR) & ISR_RDC)
 			break;
 	}
-	if (i == 100) 
+	if (i == 100)
 	{
 		panic("dp8390: remote dma failed to complete", NO_NUM);
 	}
@@ -1597,9 +1584,19 @@ int irq;
 {
 /* DP8390 interrupt, send message and reenable interrupts. */
 
+#ifdef SHOW_EVENT
+	if (debug)
+		show_event(irq, 'E');
+#endif
+
 	assert(irq >= 0 && irq < NR_IRQ_VECTORS);
 	int_pending[irq]= 1;
-	interrupt(dpeth_tasknr); 
+	interrupt(dpeth_tasknr);
+
+#ifdef SHOW_EVENT
+	if (debug)
+		show_event(irq, ' ');
+#endif
 
 	return 1;
 }

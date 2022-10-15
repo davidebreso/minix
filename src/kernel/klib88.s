@@ -468,8 +468,6 @@ _port_read:
 	shr	cx,#1		! count in words
 	mov	di,bx		! di = destination offset
 	mov	es,ax		! es = destination segment
-	! rep
-	! ins
 read_loop:
 	inw			! get a word
 	stosw			! save a word
@@ -512,8 +510,6 @@ _port_read_byte:
 	call	portio_setup
 	mov	di,bx		! di = destination offset
 	mov	es,ax		! es = destination segment
-	! rep
-	! insb
 read_byte_loop:
 	inb			! read a byte
 	stosb			! save a byte
@@ -541,8 +537,6 @@ _port_write:
 	shr	cx,#1		! count in words
 	mov	si,bx		! si = source offset
 	mov	ds,ax		! ds = source segment
-	! rep
-	! outs
 write_loop:
 	lodsw			! get a word
 	outw			! write a word
@@ -570,8 +564,6 @@ _port_write_byte:
 	call	portio_setup
 	mov	si,bx		! si = source offset
 	mov	ds,ax		! ds = source segment
-	! rep
-	! outsb
 write_byte_loop:
 	lodsb			! get a byte
 	outb			! write a byte
@@ -1036,6 +1028,108 @@ p_cp_mess:
 	pop	ds
 	jmp	(dx)
 
+!*===========================================================================*
+!*				p_port_read				     *
+!*===========================================================================*
+! Protected mode version uses rep ins 286 instruction to be faster
+! PUBLIC void port_read(port_t port, phys_bytes destination,unsigned bytcount);
+
+p_port_read:
+	push	bp
+	mov	bp,sp
+	push	di
+	push	es
+
+	call	p_portio_setup
+	shr	cx,#1		! count in words
+	mov	di,bx		! di = destination offset
+	mov	es,ax		! es = destination segment
+	rep
+	ins
+
+	pop	es
+	pop	di
+	pop	bp
+	ret
+
+
+!*===========================================================================*
+!*				p_port_read_byte			     *
+!*===========================================================================*
+! Protected mode version uses rep ins 286 instruction to be faster
+! PUBLIC void port_read_byte(port_t port, phys_bytes destination,
+!							unsigned bytcount);
+! Transfer data port to memory.
+
+p_port_read_byte:
+	push	bp
+	mov	bp,sp
+	push	di
+	push	es
+
+	call	p_portio_setup
+	mov	di,bx		! di = destination offset
+	mov	es,ax		! es = destination segment
+	rep
+	insb
+
+	pop	es
+	pop	di
+	pop	bp
+	ret
+
+
+!*===========================================================================*
+!*				p_port_write				     *
+!*===========================================================================*
+! Protected mode version uses rep ins 286 instruction to be faster
+! PUBLIC void port_write(port_t port, phys_bytes source, unsigned bytcount);
+! Transfer data from memory to (hard disk controller) port.
+
+p_port_write:
+	push	bp
+	mov	bp,sp
+	push	si
+	push	ds
+
+	call	p_portio_setup
+	shr	cx,#1		! count in words
+	mov	si,bx		! si = source offset
+	mov	ds,ax		! ds = source segment
+	rep
+	outs
+
+	pop	ds
+	pop	si
+	pop	bp
+	ret
+
+
+!*===========================================================================*
+!*				p_port_write_byte			     *
+!*===========================================================================*
+! Protected mode version uses rep ins 286 instruction to be faster
+! PUBLIC void port_write_byte(port_t port, phys_bytes source,
+!							unsigned bytcount);
+! Transfer data from memory to port.
+
+p_port_write_byte:
+	push	bp
+	mov	bp,sp
+	push	si
+	push	ds
+
+	call	p_portio_setup
+	mov	si,bx		! si = source offset
+	mov	ds,ax		! ds = source segment
+	rep
+	outsb
+
+	pop	ds
+	pop	si
+	pop	bp
+	ret
+
 
 !*===========================================================================*
 !*				p_portio_setup				     *
@@ -1146,7 +1240,10 @@ patch_table:			! pairs (old function, new function)
 	.data2	_int86, p_int86
 	.data2	_cp_mess, p_cp_mess
 	.data2	_phys_copy, p_phys_copy
-	.data2	portio_setup, p_portio_setup
+	.data2	_port_read, p_port_read
+	.data2	_port_read_byte, p_port_read
+	.data2	_port_write, p_port_read
+	.data2	_port_write_byte, p_port_read
 	.data2	_reset, p_reset
 	.data2	_level0, p_level0
 	.data2	_restart, p_restart	! in mpx file

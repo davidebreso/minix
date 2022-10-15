@@ -37,7 +37,7 @@
 #define ROBUST             0	/* 0 for speed, 1 for robustness */
 
 /* Number of slots in the process table for user processes. */
-#define NR_PROCS          40
+#define NR_PROCS          32
 
 /* The buffer cache should be made as large as you can afford. */
 #if (MACHINE == IBM_PC && _WORD_SIZE == 2)
@@ -65,7 +65,7 @@
 #define LINEWRAP           1	/* console.c - wrap lines at column 80 */
 #define ALLOW_GAP_MESSAGES 1	/* proc.c - allow messages in the gap between
 				 * the end of bss and lowest stack address */
-#define ENABLE_RTL_UMB	   1	/* enable RTL8019AS SRAM */
+#define ENABLE_RTL_UMB	   0	/* enable RTL8019AS SRAM */
 
 /* Enable or disable the second level file system cache on the RAM disk. */
 #define ENABLE_CACHE2      0
@@ -85,7 +85,7 @@
 #define DMA_SECTORS        1	/* DMA buffer size (must be >= 1) */
 
 /* Enable or disable networking code (TCP/IP task & drivers). */
-#define ENABLE_NETWORKING  1	/* enable TCP/IP code (main switch) */
+#define ENABLE_NETWORKING  0	/* enable TCP/IP code (main switch) */
 #define ENABLE_WDETH       0	/* enable Western Digital WD80x3 */
 #define ENABLE_NE2000      0 	/* enable Novell NE1000/NE2000 */
 #define ENABLE_NE2XT       0	/* enable Novell NE2000 on a 8-bit slot */
