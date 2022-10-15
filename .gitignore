@@ -1,2 +1,5 @@
+# Directory with qemu images
+qemu/
+
 # Mac OS garbage
 .DS_Store

@@ -5,6 +5,7 @@ Driver for the ne2000 ethernet cards. This file contains only the ne2000
 specific code, the rest is in dp8390.c
 
 Created:	March 15, 1994 by Philip Homburg <philip@cs.vu.nl>
+Modified:	October 15, 2022 by Davide Bresolin <bresolin.davide@gmail.com>
 */
 
 #include "kernel.h"
@@ -26,13 +27,13 @@ u8_t	pat3[]= { 0x96, 0x69, 0x5A, 0xA5 };
 
 _PROTOTYPE( static int test_8, (dpeth_t *dep, int pos, u8_t *pat)	);
 _PROTOTYPE( static int test_16, (dpeth_t *dep, int pos, u8_t *pat)	);
-_PROTOTYPE( static void ne_init, (dpeth_t *dep)				);
-_PROTOTYPE( static void ne_stop, (dpeth_t *dep)				);
+_PROTOTYPE( static void ne2k_init, (dpeth_t *dep)				);
+_PROTOTYPE( static void ne2k_stop, (dpeth_t *dep)				);
 
 /*===========================================================================*
- *				ne_probe				     *
+ *				ne2k_probe				     *
  *===========================================================================*/
-int ne_probe(dep)
+int ne2k_probe(dep)
 dpeth_t *dep;
 {
 	int byte;
@@ -42,13 +43,12 @@ dpeth_t *dep;
 
 	dep->de_dp8390_port= dep->de_base_port + NE_DP8390;
 
-	/* We probe for an ne1000 or an ne2000 by testing whether the
-	 * on board is reachable through the dp8390. Note that the
-	 * ne1000 is an 8bit card and has a memory region distict from
-	 * the 16bit ne2000
+	/* We probe for an ne2000 by testing whether the board is reachable 
+	 * through the dp8390. We first try 16 bit mode, and fallback to
+	 * 8 bit mode if we fail.
 	 */
 
-	for (dep->de_16bit= 0; dep->de_16bit < 2; dep->de_16bit++)
+	for (dep->de_16bit= 1; dep->de_16bit >= 0; dep->de_16bit--)
 	{
 		/* Reset the ethernet card */
 		byte= inb_ne(dep, NE_RESET);
@@ -82,16 +82,14 @@ dpeth_t *dep;
 				DCR_BMS);
 		}
 
+		loc1= NE2000_START;
+		loc2= NE2000_START + NE2000_SIZE - 4;
 		if (dep->de_16bit)
 		{
-			loc1= NE2000_START;
-			loc2= NE2000_START + NE2000_SIZE - 4;
 			f= test_16;
 		}
 		else
 		{
-			loc1= NE1000_START;
-			loc2= NE1000_START + NE1000_SIZE - 4;
 			f= test_8;
 		}
 		if (f(dep, loc1, pat0) && f(dep, loc1, pat1) &&
@@ -101,8 +99,8 @@ dpeth_t *dep;
 		{
 			/* We don't need a memory segment */
 			dep->de_linmem= 0;
-			dep->de_initf= ne_init;
-			dep->de_stopf= ne_stop;
+			dep->de_initf= ne2k_init;
+			dep->de_stopf= ne2k_stop;
 			dep->de_prog_IO= 1;
 			return 1;
 		}
@@ -144,7 +142,7 @@ u8_t *pat;
 	{
 		if (debug)
 		{
-			printf("%s: NE1000 remote DMA test failed\n",
+			printf("%s: NE2000 8-bit remote DMA test failed\n",
 				dep->de_name);
 		}
 		return 0;
@@ -199,7 +197,7 @@ u8_t *pat;
 	{
 		if (debug)
 		{
-			printf("%s: NE2000 remote DMA test failed\n",
+			printf("%s: NE2000 16-bit remote DMA test failed\n",
 				dep->de_name);
 		}
 		return 0;
@@ -222,19 +220,16 @@ u8_t *pat;
 
 
 /*===========================================================================*
- *				ne_init					     *
+ *				ne2k_init				     *
  *===========================================================================*/
-static void ne_init(dep)
+static void ne2k_init(dep)
 dpeth_t *dep;
 {
 	int i;
 	int word, sendq_nr;
 
 	/* Setup a transfer to get the ethernet address. */
-	if (dep->de_16bit)
-		outb_reg0(dep, DP_RBCR0, 6*2);
-	else
-		outb_reg0(dep, DP_RBCR0, 6);
+	outb_reg0(dep, DP_RBCR0, 6*2);		/* byte count is doubled */
 	outb_reg0(dep, DP_RBCR1, 0);
 	outb_reg0(dep, DP_RSAR0, 0);
 	outb_reg0(dep, DP_RSAR1, 0);
@@ -250,19 +245,12 @@ dpeth_t *dep;
 		else
 		{
 			dep->de_address.ea_addr[i] = inb_ne(dep, NE_DATA);
+			inb_ne(dep, NE_DATA);		/* Skip next byte */ 
 		}
 	}
 	dep->de_data_port= dep->de_base_port + NE_DATA;
-	if (dep->de_16bit)
-	{
-		dep->de_ramsize= NE2000_SIZE;
-		dep->de_offset_page= NE2000_START / DP_PAGESIZE;
-	}
-	else
-	{
-		dep->de_ramsize= NE1000_SIZE;
-		dep->de_offset_page= NE1000_START / DP_PAGESIZE;
-	}
+	dep->de_ramsize= NE2000_SIZE;
+	dep->de_offset_page= NE2000_START / DP_PAGESIZE;
 
 	/* Allocate one send buffer (1.5KB) per 8KB of on board memory. */
 	sendq_nr= dep->de_ramsize / 0x2000;
@@ -285,24 +273,24 @@ dpeth_t *dep;
 
 	if (!debug)
 	{
-		printf("%s: NE%d000 at %X:%d\n",
-			dep->de_name, dep->de_16bit ? 2 : 1,
+		printf("%s: NE2000 on %d-bit slot at %X:%d\n",
+			dep->de_name, dep->de_16bit ? 16 : 8,
 			dep->de_base_port, dep->de_irq);
 	}
 	else
 	{
-		printf("%s: Novell NE%d000 ethernet card at I/O address "
-			"0x%X, memory size 0x%X, irq %d\n",
-			dep->de_name, dep->de_16bit ? 2 : 1,
+		printf("%s: Novell NE2000 ethernet card on %d-bit slot "
+			"at I/O address 0x%X, memory size 0x%X, irq %d\n",
+			dep->de_name, dep->de_16bit ? 16 : 8,
 			dep->de_base_port, dep->de_ramsize, dep->de_irq);
 	}
 }
 
 
 /*===========================================================================*
- *				ne_stop					     *
+ *				ne2k_stop				     *
  *===========================================================================*/
-static void ne_stop(dep)
+static void ne2k_stop(dep)
 dpeth_t *dep;
 {
 	int byte;
@@ -315,6 +303,3 @@ dpeth_t *dep;
 
 #endif /* ENABLE_NETWORKING && ENABLE_NE2000 */
 
-/*
- * $PchId: ne2000.c,v 1.4 1996/01/19 23:30:34 philip Exp $
- */

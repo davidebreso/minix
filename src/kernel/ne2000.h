@@ -2,6 +2,7 @@
 ne2000.h
 
 Created:	March 15, 1994 by Philip Homburg <philip@cs.vu.nl>
+Modified:	October 15, 2022 by Davide Bresolin <bresolin.davide@gmail.com>
 */
 
 #ifndef NE2000_H
@@ -11,8 +12,6 @@ Created:	March 15, 1994 by Philip Homburg <philip@cs.vu.nl>
 #define NE_DATA		0x10
 #define NE_RESET	0x1F
 
-#define NE1000_START	0x2000
-#define NE1000_SIZE	0x2000
 #define NE2000_START	0x4000
 #define NE2000_SIZE	0x4000
 
@@ -23,6 +22,3 @@ Created:	March 15, 1994 by Philip Homburg <philip@cs.vu.nl>
 
 #endif /* NE2000_H */
 
-/*
- * $PchId: ne2000.h,v 1.2 1995/12/22 08:42:31 philip Exp $
- */

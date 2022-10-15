@@ -22,7 +22,7 @@ OBJS =	start.o protect.o klib.o table.o main.o proc.o \
 	console.o i8259.o rs232.o dmp.o misc.o driver.o \
 	drvlib.o floppy.o at_wini.o bios_wini.o esdi_wini.o \
 	xt_wini.o printer.o aha1540.o dp8390.o pty.o \
-	wdeth.o ne2000.o ne2000xt.o 3c503.o mcd.o sb16_dsp.o sb16_mixer.o \
+	wdeth.o ne2000.o ne1000.o 3c503.o mcd.o sb16_dsp.o sb16_mixer.o \
 	dosfat.o dosfile.o
 
 # What to make.
@@ -215,11 +215,11 @@ ne2000.o:	$i/net/gen/eth_io.h
 ne2000.o:	dp8390.h
 ne2000.o:	ne2000.h
 
-ne2000xt.o:	$a
-ne2000xt.o:	$i/net/gen/ether.h
-ne2000xt.o:	$i/net/gen/eth_io.h
-ne2000xt.o:	dp8390.h
-ne2000xt.o:	ne2000.h
+ne1000.o:	$a
+ne1000.o:	$i/net/gen/ether.h
+ne1000.o:	$i/net/gen/eth_io.h
+ne1000.o:	dp8390.h
+ne1000.o:	ne1000.h
 
 3c503.o:	$a
 3c503.o:	$i/net/gen/ether.h

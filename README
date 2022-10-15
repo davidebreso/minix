@@ -10,9 +10,9 @@ CHANGES:
  - added support for RTL8019AS network card upper memory
  - set defaults in config.h for a PC5086 small kernel
  - removed 186 instructions from real mode assembly code
- - added the ne2000xt driver for a NE2000 card in a 8-bit slot
- 
+ - separated drivers for NE2000 and NE1000 network cards
+ - modified the NE2000 driver to support card on a 8-bit slot
+
 TO DO:
- - test and bugfix the ne2000xt driver
- - unify code of the two NE2000 drivers
+ - test and bugfix the new NE2000 driver
  - setup and test networking on the PC5086

@@ -1,24 +1,21 @@
 /*
-ne2000xt.c
+ne2000.c
 
-Driver for the ne2000 ethernet cards on a 8-bit slot. 
-This file contains only the ne2000 specific code, the rest is in dp8390.c
+Driver for the ne1000 ethernet cards. This file contains only the ne1000
+specific code, the rest is in dp8390.c
 
-Created:    September 11, 2021 by Davide Bresolin <bresolin.davide@gmail.com>
-            Based on ne2000.c by Philip Homburg <philip@cs.vu.nl>
+Created:	October 15, 2022 by Davide Bresolin <bresolin.davide@gmail.com>
 */
 
 #include "kernel.h"
 #include <net/gen/ether.h>
 #include <net/gen/eth_io.h>
 #include "dp8390.h"
-#include "ne2000.h"
+#include "ne1000.h"
 
-#if (ENABLE_NETWORKING && ENABLE_NE2XT) || __minix_vmd
+#if (ENABLE_NETWORKING && ENABLE_NE1000) || __minix_vmd
 
 #define N 100
-
-_PROTOTYPE( typedef int (*testf_t), (dpeth_t *dep, int pos, u8_t *pat)	);
 
 u8_t	pat0[]= { 0x00, 0x00, 0x00, 0x00 };
 u8_t	pat1[]= { 0xFF, 0xFF, 0xFF, 0xFF };
@@ -26,14 +23,13 @@ u8_t	pat2[]= { 0xA5, 0x5A, 0x69, 0x96 };
 u8_t	pat3[]= { 0x96, 0x69, 0x5A, 0xA5 };
 
 _PROTOTYPE( static int test_8, (dpeth_t *dep, int pos, u8_t *pat)	);
-_PROTOTYPE( static int test_16, (dpeth_t *dep, int pos, u8_t *pat)	);
-_PROTOTYPE( static void next_init, (dpeth_t *dep)				);
-_PROTOTYPE( static void next_stop, (dpeth_t *dep)				);
+_PROTOTYPE( static void ne1k_init, (dpeth_t *dep)				);
+_PROTOTYPE( static void ne1k_stop, (dpeth_t *dep)				);
 
 /*===========================================================================*
- *				next_probe				     *
+ *				ne1k_probe				     *
  *===========================================================================*/
-int next_probe(dep)
+int ne1k_probe(dep)
 dpeth_t *dep;
 {
 	int byte;
@@ -42,12 +38,12 @@ dpeth_t *dep;
 	testf_t f;
 
 	dep->de_dp8390_port= dep->de_base_port + NE_DP8390;
-	/* We probe for an ne2000 by testing whether the board is 
-	 * reachable through the dp8390. Note that the driver assumes
-	 * the card is in an 8bit ISA slot
+
+	/* We probe for an ne1000 by testing whether the board is reachable 
+	 * through the dp8390. 
 	 */
 
-	dep->de_16bit= 0;	/* Set 8 bit mode */
+	dep->de_16bit= 0;		/* ne1000 is an 8-bit card. */
 	/* Reset the ethernet card */
 	byte= inb_ne(dep, NE_RESET);
 	milli_delay(2);
@@ -69,24 +65,24 @@ dpeth_t *dep;
 	/* Put it in loop-back mode */
 	outb_reg0(dep, DP_RCR, RCR_MON);
 	outb_reg0(dep, DP_TCR, TCR_NORMAL);
-	outb_reg0(dep, DP_DCR, DCR_BYTEWIDE | DCR_8BYTES |
-		DCR_BMS);
+	outb_reg0(dep, DP_DCR, DCR_BYTEWIDE | DCR_8BYTES | DCR_BMS);
+	
+	loc1= NE1000_START;
+	loc2= NE1000_START + NE1000_SIZE - 4;
 
-	loc1= NE2000_START;
-	loc2= NE2000_START + NE2000_SIZE - 4;
-	f= test_8;
-	if (f(dep, loc1, pat0) && f(dep, loc1, pat1) &&
-		f(dep, loc1, pat2) && f(dep, loc1, pat3) &&
-		f(dep, loc2, pat0) && f(dep, loc2, pat1) &&
-		f(dep, loc2, pat2) && f(dep, loc2, pat3))
+	if (test8(dep, loc1, pat0) && test8(dep, loc1, pat1) &&
+		test8(dep, loc1, pat2) && test8(dep, loc1, pat3) &&
+		test8(dep, loc2, pat0) && test8(dep, loc2, pat1) &&
+		test8(dep, loc2, pat2) && test8(dep, loc2, pat3))
 	{
 		/* We don't need a memory segment */
 		dep->de_linmem= 0;
-		dep->de_initf= next_init;
-		dep->de_stopf= next_stop;
+		dep->de_initf= ne1k_init;
+		dep->de_stopf= ne1k_stop;
 		dep->de_prog_IO= 1;
 		return 1;
 	}
+
 	return 0;
 }
 
@@ -102,6 +98,7 @@ u8_t *pat;
 	u8_t buf[4];
 	int i;
 	int r;
+
 	outb_reg0(dep, DP_ISR, 0xFF);
 
 	/* Setup a transfer to put the pattern. */
@@ -112,9 +109,8 @@ u8_t *pat;
 	outb_reg0(dep, DP_CR, CR_DM_RW | CR_PS_P0 | CR_STA);
 
 	for (i= 0; i<4; i++)
-	{
 		outb_ne(dep, NE_DATA, pat[i]);
-	}
+
 	for (i= 0; i<N; i++)
 	{
 		if (inb_reg0(dep, DP_ISR) & ISR_RDC)
@@ -122,9 +118,9 @@ u8_t *pat;
 	}
 	if (i == N)
 	{
-		if (debug) 
+		if (debug)
 		{
-			printf("%s: NE2000 remote DMA test failed\n",
+			printf("%s: NE1000 remote DMA test failed\n",
 				dep->de_name);
 		}
 		return 0;
@@ -135,41 +131,38 @@ u8_t *pat;
 	outb_reg0(dep, DP_RSAR0, pos & 0xFF);
 	outb_reg0(dep, DP_RSAR1, pos >> 8);
 	outb_reg0(dep, DP_CR, CR_DM_RR | CR_PS_P0 | CR_STA);
-	
+
 	for (i= 0; i<4; i++)
-	{
 		buf[i]= inb_ne(dep, NE_DATA);
-	}
+
 	r= (memcmp(buf, pat, 4) == 0);
 	return r;
 }
 
 
-
-
 /*===========================================================================*
- *				next_init				     *
+ *				ne1k_init					     *
  *===========================================================================*/
-static void next_init(dep)
+static void ne1k_init(dep)
 dpeth_t *dep;
 {
 	int i;
 	int word, sendq_nr;
 
 	/* Setup a transfer to get the ethernet address. */
-	outb_reg0(dep, DP_RBCR0, 12); /* byte count is doubled */
+	outb_reg0(dep, DP_RBCR0, 6);
 	outb_reg0(dep, DP_RBCR1, 0);
 	outb_reg0(dep, DP_RSAR0, 0);
 	outb_reg0(dep, DP_RSAR1, 0);
 	outb_reg0(dep, DP_CR, CR_DM_RR | CR_PS_P0 | CR_STA);
+
 	for (i= 0; i<6; i++)
 	{
 		dep->de_address.ea_addr[i] = inb_ne(dep, NE_DATA);
-		inb_ne(dep, NE_DATA);	/* Skip next byte */ 
 	}
-	dep->de_data_port= dep->de_base_port + NE_DATA; 
-	dep->de_ramsize= NE2000_SIZE;
-	dep->de_offset_page= NE2000_START / DP_PAGESIZE;
+	dep->de_data_port= dep->de_base_port + NE_DATA;
+	dep->de_ramsize= NE1000_SIZE;
+	dep->de_offset_page= NE1000_START / DP_PAGESIZE;
 
 	/* Allocate one send buffer (1.5KB) per 8KB of on board memory. */
 	sendq_nr= dep->de_ramsize / 0x2000;
@@ -192,24 +185,22 @@ dpeth_t *dep;
 
 	if (!debug)
 	{
-		printf("%s: NE2000 at %X:%d\n",
-			dep->de_name, 
+		printf("%s: NE1000 at %X:%d\n",
 			dep->de_base_port, dep->de_irq);
 	}
 	else
 	{
-		printf("%s: Novell NE2000 ethernet card at I/O address "
+		printf("%s: Novell NE1000 ethernet card at I/O address "
 			"0x%X, memory size 0x%X, irq %d\n",
-			dep->de_name, 
 			dep->de_base_port, dep->de_ramsize, dep->de_irq);
 	}
 }
 
 
 /*===========================================================================*
- *				next_stop				     *
+ *				ne1k_stop					     *
  *===========================================================================*/
-static void next_stop(dep)
+static void ne1k_stop(dep)
 dpeth_t *dep;
 {
 	int byte;
@@ -220,5 +211,5 @@ dpeth_t *dep;
 	outb_ne(dep, NE_RESET, byte);
 }
 
-#endif /* ENABLE_NETWORKING && ENABLE_NE2XT */
+#endif /* ENABLE_NETWORKING && ENABLE_NE1000 */
 

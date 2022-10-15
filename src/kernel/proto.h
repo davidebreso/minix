@@ -225,10 +225,10 @@ _PROTOTYPE( void s_call, (void) ), _PROTOTYPE( p_s_call, (void) );
 _PROTOTYPE( void level0_call, (void) );
 
 /* ne2000.c */
-_PROTOTYPE( int ne_probe, (struct dpeth *dep)				);
+_PROTOTYPE( int ne2k_probe, (struct dpeth *dep)				);
 
-/* ne2000xt.c */
-_PROTOTYPE( int next_probe, (struct dpeth *dep)				);
+/* ne1000.c */
+_PROTOTYPE( int ne1k_probe, (struct dpeth *dep)				);
 
 /* printer.c */
 _PROTOTYPE( void pr_restart, (void)					);
