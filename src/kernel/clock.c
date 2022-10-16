@@ -439,7 +439,7 @@ int irq;
 
   if (ps_mca) {
 	/* Acknowledge the PS/2 clock interrupt. */
-	out_byte(PORT_B, in_byte(PORT_B) | CLOCK_ACK_BIT);
+	outb(PORT_B, inb(PORT_B) | CLOCK_ACK_BIT);
   }
 
   /* Update user and system accounting times.
@@ -497,9 +497,9 @@ PRIVATE void init_clock()
 {
 /* Initialize channel 0 of the 8253A timer to e.g. 60 Hz. */
 
-  out_byte(TIMER_MODE, SQUARE_WAVE);	/* set timer to run continuously */
-  out_byte(TIMER0, TIMER_COUNT);	/* load timer low byte */
-  out_byte(TIMER0, TIMER_COUNT >> 8);	/* load timer high byte */
+  outb(TIMER_MODE, SQUARE_WAVE);	/* set timer to run continuously */
+  outb(TIMER0, TIMER_COUNT);	/* load timer low byte */
+  outb(TIMER0, TIMER_COUNT >> 8);	/* load timer high byte */
   put_irq_handler(CLOCK_IRQ, clock_handler);	/* set the interrupt handler */
   enable_irq(CLOCK_IRQ);		/* ready for clock interrupts */
 }
@@ -512,9 +512,9 @@ PUBLIC void clock_stop()
 {
 /* Reset the clock to the BIOS rate. (For rebooting) */
 
-  out_byte(TIMER_MODE, 0x36);
-  out_byte(TIMER0, 0);
-  out_byte(TIMER0, 0);
+  outb(TIMER_MODE, 0x36);
+  outb(TIMER0, 0);
+  outb(TIMER0, 0);
 }
 
 
@@ -562,9 +562,9 @@ struct milli_state *msp;
    * and TIMER_COUNT, but before the clock task has been initialized,
    * its maximum value is 65535, as set by the BIOS.
    */
-  out_byte(TIMER_MODE, LATCH_COUNT);	/* make chip copy count to latch */
-  count = in_byte(TIMER0);	/* countdown continues during 2-step read */
-  count |= in_byte(TIMER0) << 8;
+  outb(TIMER_MODE, LATCH_COUNT);	/* make chip copy count to latch */
+  count = inb(TIMER0);	/* countdown continues during 2-step read */
+  count |= inb(TIMER0) << 8;
 
   /* Add difference between previous and new count unless the counter has
    * increased (restarted its cycle).  We may lose a tick now and then, but

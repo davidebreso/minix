@@ -698,10 +698,10 @@ unsigned val;			/* 16-bit value to set it to */
  * Registers 14-15 tell the 6845 where to put the cursor
  */
   lock();			/* try to stop h/w loading in-between value */
-  out_byte(vid_port + INDEX, reg);		/* set the index register */
-  out_byte(vid_port + DATA, (val>>8) & BYTE);	/* output high byte */
-  out_byte(vid_port + INDEX, reg + 1);		/* again */
-  out_byte(vid_port + DATA, val&BYTE);		/* output low byte */
+  outb(vid_port + INDEX, reg);		/* set the index register */
+  outb(vid_port + DATA, (val>>8) & BYTE);	/* output high byte */
+  outb(vid_port + INDEX, reg + 1);		/* again */
+  outb(vid_port + DATA, val&BYTE);		/* output low byte */
   unlock();
 }
 
@@ -719,11 +719,11 @@ PRIVATE void beep()
   message mess;
 
   if (beeping) return;
-  out_byte(TIMER_MODE, 0xB6);	/* set up timer channel 2 (square wave) */
-  out_byte(TIMER2, BEEP_FREQ & BYTE);	/* load low-order bits of frequency */
-  out_byte(TIMER2, (BEEP_FREQ >> 8) & BYTE);	/* now high-order bits */
+  outb(TIMER_MODE, 0xB6);	/* set up timer channel 2 (square wave) */
+  outb(TIMER2, BEEP_FREQ & BYTE);	/* load low-order bits of frequency */
+  outb(TIMER2, (BEEP_FREQ >> 8) & BYTE);	/* now high-order bits */
   lock();			/* guard PORT_B from keyboard intr handler */
-  out_byte(PORT_B, in_byte(PORT_B) | 3);	/* turn on beep bits */
+  outb(PORT_B, inb(PORT_B) | 3);	/* turn on beep bits */
   unlock();
   beeping = TRUE;
 
@@ -743,7 +743,7 @@ PRIVATE void stop_beep()
 /* Turn off the beeper by turning off bits 0 and 1 in PORT_B. */
 
   lock();			/* guard PORT_B from keyboard intr handler */
-  out_byte(PORT_B, in_byte(PORT_B) & ~3);
+  outb(PORT_B, inb(PORT_B) & ~3);
   beeping = FALSE;
   unlock();
 }
@@ -982,8 +982,8 @@ struct sequence *seq;
 {
   int len= 7;
   do {
-	out_byte(seq->index, seq->port);
-	out_byte(seq->index+1, seq->value);
+	outb(seq->index, seq->port);
+	outb(seq->index+1, seq->value);
 	seq++;
   } while (--len > 0);
 }

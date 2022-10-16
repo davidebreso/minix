@@ -14,8 +14,8 @@ Created:	October 15, 2022 by Davide Bresolin <bresolin.davide@gmail.com>
 #define NE1000_START	0x2000
 #define NE1000_SIZE	0x2000
 
-#define inb_ne(dep, reg) (in_byte(dep->de_base_port+reg))
-#define outb_ne(dep, reg, data) (out_byte(dep->de_base_port+reg, data))
+#define inb_ne(dep, reg) (inb(dep->de_base_port+reg))
+#define outb_ne(dep, reg, data) (outb(dep->de_base_port+reg, data))
 
 #endif /* NE1000_H */
 

@@ -84,8 +84,8 @@ Created:	before Dec 28, 1992 by Philip Homburg
 #define E_790_GCR_IR2	0x40		/* bit 2 of encoded IRQ */
 
 
-#define inb_we(dep, reg) (in_byte(dep->de_base_port+reg))
-#define outb_we(dep, reg, data) (out_byte(dep->de_base_port+reg, data))
+#define inb_we(dep, reg) (inb(dep->de_base_port+reg))
+#define outb_we(dep, reg, data) (outb(dep->de_base_port+reg, data))
 
 #endif /* WDETH_H */
 

@@ -17,10 +17,6 @@
 .define	__exit		! dummy for library routines
 .define	___exit		! dummy for library routines
 .define	.fat, .trp	! dummies for library routines
-.define	_in_byte	! read a byte from a port and return it
-.define	_in_word	! read a word from a port and return it
-.define	_out_byte	! write a byte to a port
-.define	_out_word	! write a word to a port
 .define	_port_read	! transfer data from (disk controller) port to memory
 .define	_port_read_byte	! likewise byte by byte
 .define	_port_write	! transfer data from memory to (disk controller) port
@@ -390,68 +386,6 @@ ___exit:
 	sti
 	jmp __exit
 
-
-!*===========================================================================*
-!*				in_byte					     *
-!*===========================================================================*
-! PUBLIC unsigned in_byte(port_t port);
-! Read an (unsigned) byte from the i/o port  port  and return it.
-
-_in_byte:
-	pop	bx
-	pop	dx		! port
-	dec	sp
-	dec	sp
-	inb			! input 1 byte
-	subb	ah,ah		! unsign extend
-	jmp	(bx)
-
-
-!*===========================================================================*
-!*				in_word					     *
-!*===========================================================================*
-! PUBLIC unsigned short in_word(port_t port);
-! Read an (unsigned) word from the i/o port and return it.
-
-_in_word:
-	pop	bx
-	pop	dx		! port
-	dec	sp
-	dec	sp		! added to new klib.s 3/21/91 d.e.c.
-	inw			! input 1 word no sign extend needed
-	jmp	(bx)
-
-
-!*===========================================================================*
-!*				out_byte				     *
-!*===========================================================================*
-! PUBLIC void out_byte(port_t port, int value);
-! Write  value  (cast to a byte)  to the I/O port  port.
-
-_out_byte:
-	pop	bx
-	pop	dx		! port
-	pop	ax		! value
-	sub	sp,#2+2
-	outb			! output 1 byte
-	jmp	(bx)
-
-
-!*===========================================================================*
-!*				out_word				     *
-!*===========================================================================*
-! PUBLIC void out_word(port_t port, int value);
-! Write  value  (cast to a word)  to the I/O port  port.
-
-_out_word:
-	pop	bx
-	pop	dx		! port
-	pop	ax		! value
-	sub	sp,#2+2
-	outw			! output 1 word
-	jmp	(bx)
-
-
 !*===========================================================================*
 !*				port_read				     *
 !*===========================================================================*
@@ -603,7 +537,7 @@ _unlock:
 ! PUBLIC void enable_irq(unsigned irq)
 ! Enable an interrupt request line by clearing an 8259 bit.
 ! Equivalent code for irq < 8:
-!	out_byte(INT_CTLMASK, in_byte(INT_CTLMASK) & ~(1 << irq));
+!	outb(INT_CTLMASK, inb(INT_CTLMASK) & ~(1 << irq));
 
 _enable_irq:
 	mov	bx, sp
@@ -634,7 +568,7 @@ enable_8:
 ! PUBLIC int disable_irq(unsigned irq)
 ! Disable an interrupt request line by setting an 8259 bit.
 ! Equivalent code for irq < 8:
-!	out_byte(INT_CTLMASK, in_byte(INT_CTLMASK) | (1 << irq));
+!	outb(INT_CTLMASK, inb(INT_CTLMASK) | (1 << irq));
 ! Returns true iff the interrupt was not already disabled.
 
 _disable_irq:

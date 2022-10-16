@@ -108,8 +108,8 @@
 
 /* Macros to handle flow control.
  * Interrupts must be off when they are used.
- * Time is critical - already the function call for out_byte() is annoying.
- * If out_byte() can be done in-line, tests to avoid it can be dropped.
+ * Time is critical - already the function call for outb() is annoying.
+ * If outb() can be done in-line, tests to avoid it can be dropped.
  * istart() tells external device we are ready by raising RTS.
  * istop() tells external device we are not ready by dropping RTS.
  * DTR is kept high all the time (it probably should be raised by open and
@@ -117,19 +117,19 @@
  * OUT2 is also kept high all the time.
  */
 #define istart(rs) \
-	(out_byte((rs)->modem_ctl_port, MC_OUT2 | MC_RTS | MC_DTR), \
+	(outb((rs)->modem_ctl_port, MC_OUT2 | MC_RTS | MC_DTR), \
 		(rs)->idevready = TRUE)
 #define istop(rs) \
-	(out_byte((rs)->modem_ctl_port, MC_OUT2 | MC_DTR), \
+	(outb((rs)->modem_ctl_port, MC_OUT2 | MC_DTR), \
 		(rs)->idevready = FALSE)
 
 /* Macro to tell if device is ready.  The rs->cts field is set to MS_CTS if
  * CLOCAL is in effect for a line without a CTS wire.
  */
-#define devready(rs) ((in_byte(rs->modem_status_port) | rs->cts) & MS_CTS)
+#define devready(rs) ((inb(rs->modem_status_port) | rs->cts) & MS_CTS)
 
 /* Macro to tell if transmitter is ready. */
-#define txready(rs) (in_byte(rs->line_status_port) & LS_TRANSMITTER_READY)
+#define txready(rs) (inb(rs->line_status_port) & LS_TRANSMITTER_READY)
 
 /* Macro to tell if carrier has dropped.
  * The RS232 Carrier Detect (CD) line is usually connected to the 8250
@@ -139,7 +139,7 @@
  * dropped.
  */
 #define devhup(rs)	\
-	(in_byte(rs->modem_status_port) & (MS_RLSD|MS_DRLSD) == MS_DRLSD)
+	(inb(rs->modem_status_port) & (MS_RLSD|MS_DRLSD) == MS_DRLSD)
 
 #else /* MACHINE == ATARI */
 
@@ -441,12 +441,12 @@ rs232_t *rs;			/* which line */
   lock();
 
   /* Select the baud rate divisor registers and change the rate. */
-  out_byte(rs->line_ctl_port, LC_ADDRESS_DIVISOR);
-  out_byte(rs->div_low_port, divisor);
-  out_byte(rs->div_hi_port, divisor >> 8);
+  outb(rs->line_ctl_port, LC_ADDRESS_DIVISOR);
+  outb(rs->div_low_port, divisor);
+  outb(rs->div_hi_port, divisor >> 8);
 
   /* Change the line controls and reselect the usual registers. */
-  out_byte(rs->line_ctl_port, line_controls);
+  outb(rs->line_ctl_port, line_controls);
 
   rs->ostate |= ORAW;
   if ((tp->tty_termios.c_lflag & IXON) && rs->oxoff != _POSIX_VDISABLE)
@@ -532,7 +532,7 @@ tty_t *tp;			/* which TTY */
   istop(rs);			/* sets modem_ctl_port */
   rs_config(rs);
 #if (MACHINE == IBM_PC)
-  out_byte(rs->int_enab_port, 0);
+  outb(rs->int_enab_port, 0);
 #endif
 
   /* Clear any harmful leftover interrupts.  An output interrupt is harmless
@@ -540,8 +540,8 @@ tty_t *tp;			/* which TTY */
    * queue using the status from clearing the modem status interrupt.
    */
 #if (MACHINE == IBM_PC)
-  in_byte(rs->line_status_port);
-  in_byte(rs->recv_port);
+  inb(rs->line_status_port);
+  inb(rs->recv_port);
 #endif
   rs->ostate = devready(rs) | ORAW | OSWREADY;	/* reads modem_ctl_port */
   rs->ohead = rs->otail = rs->obuf;
@@ -562,7 +562,7 @@ tty_t *tp;			/* which TTY */
 
   put_irq_handler(irq, (line & 1) ? rs232_2handler : rs232_1handler);
   enable_irq(irq);
-  out_byte(rs->int_enab_port, IE_LINE_STATUS_CHANGE | IE_MODEM_STATUS_CHANGE
+  outb(rs->int_enab_port, IE_LINE_STATUS_CHANGE | IE_MODEM_STATUS_CHANGE
 				| IE_RECEIVER_READY | IE_TRANSMITTER_READY);
 #else /* MACHINE == ATARI */
   /* Initialize the 68901 chip, then enable interrupts. */
@@ -686,10 +686,10 @@ tty_t *tp;			/* which tty */
   rs232_t *rs = tp->tty_priv;
   int line_controls;
 
-  line_controls = in_byte(rs->line_ctl_port);
-  out_byte(rs->line_ctl_port, line_controls | LC_BREAK);
+  line_controls = inb(rs->line_ctl_port);
+  outb(rs->line_ctl_port, line_controls | LC_BREAK);
   milli_delay(400);						/* ouch */
-  out_byte(rs->line_ctl_port, line_controls);
+  outb(rs->line_ctl_port, line_controls);
 }
 
 
@@ -714,7 +714,7 @@ int irq;
 	 * (and then we have to worry about being stuck in the loop too long).
 	 * Unfortunately, some serial cards lock up without this.
 	 */
-	switch (in_byte(rs->int_id_port)) {
+	switch (inb(rs->int_id_port)) {
 	case IS_RECEIVER_READY:
 		in_int(rs);
 		continue;
@@ -746,7 +746,7 @@ int irq;
   register rs232_t *rs = &rs_lines[1];
 
   while (TRUE) {
-	switch (in_byte(rs->int_id_port)) {
+	switch (inb(rs->int_id_port)) {
 	case IS_RECEIVER_READY:
 		in_int(rs);
 		continue;
@@ -823,7 +823,7 @@ register rs232_t *rs;		/* line with input interrupt */
   int c;
 
 #if (MACHINE == IBM_PC)
-  c = in_byte(rs->recv_port);
+  c = inb(rs->recv_port);
 #else /* MACHINE == ATARI */
   c = MFP->mf_udr;
 #endif
@@ -859,7 +859,7 @@ register rs232_t *rs;		/* line with line status interrupt */
 /* Check for and record errors. */
 
 #if (MACHINE == IBM_PC)
-  rs->lstatus = in_byte(rs->line_status_port);
+  rs->lstatus = inb(rs->line_status_port);
 #else /* MACHINE == ATARI */
   rs->lstatus = MFP->mf_rsr;
   MFP->mf_rsr &= R_ENA;
@@ -917,7 +917,7 @@ register rs232_t *rs;		/* line with output interrupt */
   if (rs->ostate >= (ODEVREADY | OQUEUED | OSWREADY)) {
 	/* Bit test allows ORAW and requires the others. */
 #if (MACHINE == IBM_PC)
-	out_byte(rs->xmit_port, *rs->otail);
+	outb(rs->xmit_port, *rs->otail);
 #else /* MACHINE == ATARI */
 	MFP->mf_udr = *rs->otail;
 #endif

@@ -69,8 +69,8 @@
  * Init pulse length:	   over 200u (not sure).
  *
  * The strobe length is about 50u with the code here and function calls for
- * out_byte() - not much to spare.  The 0.5u minimums may be violated if
- * out_byte() is generated in-line on a fast machine.  Some printer boards
+ * outb() - not much to spare.  The 0.5u minimums may be violated if
+ * outb() is generated in-line on a fast machine.  Some printer boards
  * are slower than 0.5u anyway.
  */
 
@@ -251,9 +251,9 @@ PRIVATE void print_init()
  */
 
   phys_copy(0x408L, vir2phys(&port_base), 2L);
-  out_byte(port_base + 2, INIT_PRINTER);
+  outb(port_base + 2, INIT_PRINTER);
   milli_delay(2);		/* easily satisfies Centronics minimum */
-  out_byte(port_base + 2, SELECT);
+  outb(port_base + 2, SELECT);
   put_irq_handler(PRINTER_IRQ, pr_handler);
   enable_irq(PRINTER_IRQ);		/* ready for printer interrupts */
 }
@@ -304,7 +304,7 @@ int irq;
 	 * when the printer is busy with a previous character, because the
 	 * interrupt status does not affect the printer.
 	 */
-	out_byte(port_base + 2, SELECT);
+	outb(port_base + 2, SELECT);
 	return 1;
   }
 
@@ -312,7 +312,7 @@ int irq;
 	/* Loop to handle fast (buffered) printers.  It is important that
 	 * processor interrupts are not disabled here, just printer interrupts.
 	 */
-	status = in_byte(port_base + 1);
+	status = inb(port_base + 1);
 	if ((status & STATUS_MASK) == BUSY_STATUS) {
 		/* Still busy with last output.  This normally happens
 		 * immediately after doing output to an unbuffered or slow
@@ -324,10 +324,10 @@ int irq;
 	}
 	if ((status & STATUS_MASK) == NORMAL_STATUS) {
 		/* Everything is all right.  Output another character. */
-		out_byte(port_base, *optr++);	/* output character */
+		outb(port_base, *optr++);	/* output character */
 		lock();		/* ensure strobe is not too long */
-		out_byte(port_base + 2, ASSERT_STROBE);
-		out_byte(port_base + 2, NEGATE_STROBE);
+		outb(port_base + 2, ASSERT_STROBE);
+		outb(port_base + 2, NEGATE_STROBE);
 		unlock();
 		opending = FALSE;	/* show interrupt is working */
 

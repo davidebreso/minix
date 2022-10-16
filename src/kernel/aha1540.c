@@ -1710,7 +1710,7 @@ vir_bytes len;
 
   mailbox[0].status = AHA_MBOXSTART;
 
-  out_byte(AHA_DATAREG, AHACOM_STARTSCSI);  /* hey, you've got mail! */
+  outb(AHA_DATAREG, AHACOM_STARTSCSI);  /* hey, you've got mail! */
 
   /* Wait for the SCSI command to complete. */
   while (mailbox[1].status == AHA_MBOXFREE) {
@@ -1802,20 +1802,20 @@ byte *outptr, *inptr;
 
   /* Send command bytes. */
   for (i = 0; i < outlen; i++) {
-	while (in_byte(AHA_STATREG) & AHA_CDF) {}	/* !! timeout */
-	out_byte(AHA_DATAREG, *outptr++);
+	while (inb(AHA_STATREG) & AHA_CDF) {}	/* !! timeout */
+	outb(AHA_DATAREG, *outptr++);
   }
 
   /* Receive data bytes. */
   for (i = 0; i < inlen; i++) {
-	while (!(in_byte(AHA_STATREG) & AHA_DF)
-		&& !(in_byte(AHA_INTRREG) & AHA_HACC)) {}  /* !! timeout */
-	*inptr++ = in_byte(AHA_DATAREG);
+	while (!(inb(AHA_STATREG) & AHA_DF)
+		&& !(inb(AHA_INTRREG) & AHA_HACC)) {}  /* !! timeout */
+	*inptr++ = inb(AHA_DATAREG);
   }
 
   /* Wait for command completion. */
-  while (!(in_byte(AHA_INTRREG) & AHA_HACC)) {}	/* !! timeout */
-  out_byte(AHA_CNTLREG, AHA_IRST);	/* clear interrupt */
+  while (!(inb(AHA_INTRREG) & AHA_HACC)) {}	/* !! timeout */
+  outb(AHA_CNTLREG, AHA_IRST);	/* clear interrupt */
   if (aha_irq != 0) enable_irq(aha_irq);
 
   /* !! should check status register here for invalid command */
@@ -1853,9 +1853,9 @@ PRIVATE int aha_reset()
   tr_speed = v;
 
   /* Reset controller, wait for self test to complete. */
-  out_byte(AHA_CNTLREG, AHA_HRST);
+  outb(AHA_CNTLREG, AHA_HRST);
   milli_start(&ms);
-  while (((stat = in_byte(AHA_STATREG)) & (AHA_STST | AHA_DIAGF | AHA_INIT
+  while (((stat = inb(AHA_STATREG)) & (AHA_STST | AHA_DIAGF | AHA_INIT
 		| AHA_IDLE | AHA_CDF | AHA_DF)) != (AHA_INIT | AHA_IDLE))
   {
 	if (milli_elapsed(&ms) >= AHA_TIMEOUT) {
@@ -1899,20 +1899,20 @@ PRIVATE int aha_reset()
   /* Set up the DMA channel. */
   switch (getcdata[0]) {
   case 0x80:		/* channel 7 */
-	out_byte(0xD6, 0xC3);
-	out_byte(0xD4, 0x03);
+	outb(0xD6, 0xC3);
+	outb(0xD4, 0x03);
 	break;
   case 0x40:		/* channel 6 */
-	out_byte(0xD6, 0xC2);
-	out_byte(0xD4, 0x02);
+	outb(0xD6, 0xC2);
+	outb(0xD4, 0x02);
 	break;
   case 0x20:		/* channel 5 */
-	out_byte(0xD6, 0xC1);
-	out_byte(0xD4, 0x01);
+	outb(0xD6, 0xC1);
+	outb(0xD4, 0x01);
 	break;
   case 0x01:		/* channel 0 */
-	out_byte(0x0B, 0x0C);
-	out_byte(0x0A, 0x00);
+	outb(0x0B, 0x0C);
+	outb(0x0A, 0x00);
 	break;
   default:
 	printf("aha0: AHA154x: strange DMA channel\n");
@@ -2001,11 +2001,11 @@ int irq;
 {
 /* Host adapter interrupt, send message to SCSI task and reenable interrupts. */
 
-  if (in_byte(AHA_INTRREG) & AHA_HACC) {
+  if (inb(AHA_INTRREG) & AHA_HACC) {
 	/* Simple commands are polled. */
 	return 0;
   } else {
-	out_byte(AHA_CNTLREG, AHA_IRST);	/* clear interrupt */
+	outb(AHA_CNTLREG, AHA_IRST);	/* clear interrupt */
 	interrupt(aha_tasknr);
 	return 1;
   }

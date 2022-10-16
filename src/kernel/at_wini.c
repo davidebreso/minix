@@ -168,7 +168,7 @@ FORWARD _PROTOTYPE( void w_geometry, (struct partition *entry) );
 
 /* w_waitfor loop unrolled once for speed. */
 #define waitfor(mask, value)	\
-	((in_byte(w_wn->base + REG_STATUS) & mask) == value \
+	((inb(w_wn->base + REG_STATUS) & mask) == value \
 		|| w_waitfor(mask, value))
 
 
@@ -336,9 +336,9 @@ PRIVATE int w_identify()
 			|((u32_t) id_byte(n)[3] << 24))
 
   /* Check if the one of the registers exists. */
-  r = in_byte(wn->base + REG_CYL_LO);
-  out_byte(wn->base + REG_CYL_LO, ~r);
-  if (in_byte(wn->base + REG_CYL_LO) == r) return(ERR);
+  r = inb(wn->base + REG_CYL_LO);
+  outb(wn->base + REG_CYL_LO, ~r);
+  if (inb(wn->base + REG_CYL_LO) == r) return(ERR);
 
   /* Looks OK; register IRQ and try an ATA identify command. */
   put_irq_handler(wn->irq, w_handler);
@@ -686,7 +686,7 @@ struct command *cmd;		/* Command block */
   }
 
   /* Select drive. */
-  out_byte(base + REG_LDH, cmd->ldh);
+  outb(base + REG_LDH, cmd->ldh);
 
   if (!waitfor(STATUS_BSY, 0)) {
 	printf("%s: drive not ready\n", w_name());
@@ -696,14 +696,14 @@ struct command *cmd;		/* Command block */
   /* Schedule a wakeup call, some controllers are flaky. */
   clock_mess(WAKEUP, w_timeout);
 
-  out_byte(base + REG_CTL, wn->pheads >= 8 ? CTL_EIGHTHEADS : 0);
-  out_byte(base + REG_PRECOMP, cmd->precomp);
-  out_byte(base + REG_COUNT, cmd->count);
-  out_byte(base + REG_SECTOR, cmd->sector);
-  out_byte(base + REG_CYL_LO, cmd->cyl_lo);
-  out_byte(base + REG_CYL_HI, cmd->cyl_hi);
+  outb(base + REG_CTL, wn->pheads >= 8 ? CTL_EIGHTHEADS : 0);
+  outb(base + REG_PRECOMP, cmd->precomp);
+  outb(base + REG_COUNT, cmd->count);
+  outb(base + REG_SECTOR, cmd->sector);
+  outb(base + REG_CYL_LO, cmd->cyl_lo);
+  outb(base + REG_CYL_HI, cmd->cyl_hi);
   lock();
-  out_byte(base + REG_COMMAND, cmd->command);
+  outb(base + REG_COMMAND, cmd->command);
   w_command = cmd->command;
   w_status = STATUS_BSY;
   unlock();
@@ -803,9 +803,9 @@ PRIVATE int w_reset()
   milli_delay(RECOVERYTIME);
 
   /* Strobe reset bit */
-  out_byte(w_wn->base + REG_CTL, CTL_RESET);
+  outb(w_wn->base + REG_CTL, CTL_RESET);
   milli_delay(1);
-  out_byte(w_wn->base + REG_CTL, 0);
+  outb(w_wn->base + REG_CTL, 0);
   milli_delay(1);
 
   /* Wait for controller ready */
@@ -843,7 +843,7 @@ PRIVATE int w_intr_wait()
 	r = OK;
 	w_status |= STATUS_BSY;	/* assume still busy with I/O */
   } else
-  if ((w_status & STATUS_ERR) && (in_byte(w_wn->base + REG_ERROR) & ERROR_BB)) {
+  if ((w_status & STATUS_ERR) && (inb(w_wn->base + REG_ERROR) & ERROR_BB)) {
   	r = ERR_BAD_SECTOR;	/* sector marked bad, retries won't help */
   } else {
   	r = ERR;		/* any other error */
@@ -866,7 +866,7 @@ int value;			/* required status */
 
   milli_start(&ms);
   do {
-       if ((in_byte(w_wn->base + REG_STATUS) & mask) == value) return 1;
+       if ((inb(w_wn->base + REG_STATUS) & mask) == value) return 1;
   } while (milli_elapsed(&ms) < TIMEOUT);
 
   w_need_reset();	/* Controller gone deaf. */
@@ -882,7 +882,7 @@ int irq;
 {
 /* Disk interrupt, send message to winchester task and reenable interrupts. */
 
-  w_status = in_byte(w_wn->base + REG_STATUS);	/* acknowledge interrupt */
+  w_status = inb(w_wn->base + REG_STATUS);	/* acknowledge interrupt */
   interrupt(win_tasknr);
   return 1;
 }

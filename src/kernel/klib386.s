@@ -19,10 +19,6 @@
 .define	__exit		! dummy for library routines
 .define	___exit		! dummy for library routines
 .define	___main		! dummy for GCC
-.define	_in_byte	! read a byte from a port and return it
-.define	_in_word	! read a word from a port and return it
-.define	_out_byte	! write a byte to a port
-.define	_out_word	! write a word to a port
 .define	_port_read	! transfer data from (disk controller) port to memory
 .define	_port_read_byte	! likewise byte by byte
 .define	_port_write	! transfer data from memory to (disk controller) port
@@ -232,62 +228,6 @@ ___main:
 
 
 !*===========================================================================*
-!*				in_byte					     *
-!*===========================================================================*
-! PUBLIC unsigned in_byte(port_t port);
-! Read an (unsigned) byte from the i/o port  port  and return it.
-
-	.align	16
-_in_byte:
-	mov	edx, 4(esp)		! port
-	sub	eax, eax
-	inb	dx			! read 1 byte
-	ret
-
-
-!*===========================================================================*
-!*				in_word					     *
-!*===========================================================================*
-! PUBLIC unsigned in_word(port_t port);
-! Read an (unsigned) word from the i/o port  port  and return it.
-
-	.align	16
-_in_word:
-	mov	edx, 4(esp)		! port
-	sub	eax, eax
-    o16	in	dx			! read 1 word
-	ret
-
-
-!*===========================================================================*
-!*				out_byte				     *
-!*===========================================================================*
-! PUBLIC void out_byte(port_t port, u8_t value);
-! Write  value  (cast to a byte)  to the I/O port  port.
-
-	.align	16
-_out_byte:
-	mov	edx, 4(esp)		! port
-	movb	al, 4+4(esp)		! value
-	outb	dx			! output 1 byte
-	ret
-
-
-!*===========================================================================*
-!*				out_word				     *
-!*===========================================================================*
-! PUBLIC void out_word(Port_t port, U16_t value);
-! Write  value  (cast to a word)  to the I/O port  port.
-
-	.align	16
-_out_word:
-	mov	edx, 4(esp)		! port
-	mov	eax, 4+4(esp)		! value
-    o16	out	dx			! output 1 word
-	ret
-
-
-!*===========================================================================*
 !*				port_read				     *
 !*===========================================================================*
 ! PUBLIC void port_read(port_t port, phys_bytes destination, unsigned bytcount);
@@ -423,7 +363,7 @@ _unlock:
 ! PUBLIC void enable_irq(unsigned irq)
 ! Enable an interrupt request line by clearing an 8259 bit.
 ! Equivalent code for irq < 8:
-!	out_byte(INT_CTLMASK, in_byte(INT_CTLMASK) & ~(1 << irq));
+!	outb(INT_CTLMASK, inb(INT_CTLMASK) & ~(1 << irq));
 
 	.align	16
 _enable_irq:
@@ -455,7 +395,7 @@ enable_8:
 ! PUBLIC int disable_irq(unsigned irq)
 ! Disable an interrupt request line by setting an 8259 bit.
 ! Equivalent code for irq < 8:
-!	out_byte(INT_CTLMASK, in_byte(INT_CTLMASK) | (1 << irq));
+!	outb(INT_CTLMASK, inb(INT_CTLMASK) | (1 << irq));
 ! Returns true iff the interrupt was not already disabled.
 
 	.align	16

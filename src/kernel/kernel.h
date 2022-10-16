@@ -17,6 +17,10 @@
 #include <limits.h>
 #include <errno.h>
 
+#if (CHIP == INTEL)
+#include <ibm/portio.h>
+#endif
+
 #include "const.h"
 #include "type.h"
 #include "proto.h"

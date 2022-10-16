@@ -311,11 +311,11 @@ PRIVATE void set_leds()
   leds = (slock << 0) | (numlock << 1) | (capslock << 2);
 
   kb_wait();			/* wait for buffer empty  */
-  out_byte(KEYBD, LED_CODE);	/* prepare keyboard to accept LED values */
+  outb(KEYBD, LED_CODE);	/* prepare keyboard to accept LED values */
   kb_ack();			/* wait for ack response  */
 
   kb_wait();			/* wait for buffer empty  */
-  out_byte(KEYBD, leds);	/* give keyboard LED values */
+  outb(KEYBD, leds);	/* give keyboard LED values */
   kb_ack();			/* wait for ack response  */
 }
 
@@ -331,8 +331,8 @@ PRIVATE int kb_wait()
 
   retries = MAX_KB_BUSY_RETRIES + 1;	/* wait until not busy */
   while (--retries != 0
-		&& (status = in_byte(KB_STATUS)) & (KB_IN_FULL|KB_OUT_FULL)) {
-	if (status & KB_OUT_FULL) (void) in_byte(KEYBD);	/* discard */
+		&& (status = inb(KB_STATUS)) & (KB_IN_FULL|KB_OUT_FULL)) {
+	if (status & KB_OUT_FULL) (void) inb(KEYBD);	/* discard */
   }
   return(retries);		/* nonzero if ready */
 }
@@ -348,7 +348,7 @@ PRIVATE int kb_ack()
   int retries;
 
   retries = MAX_KB_ACK_RETRIES + 1;
-  while (--retries != 0 && in_byte(KEYBD) != KB_ACK)
+  while (--retries != 0 && inb(KEYBD) != KB_ACK)
 	;			/* wait for ack */
   return(retries);		/* nonzero if ack received */
 }
@@ -441,10 +441,10 @@ PRIVATE int scan_keyboard()
   int code;
   int val;
 
-  code = in_byte(KEYBD);	/* get the scan code for the key struck */
-  val = in_byte(PORT_B);	/* strobe the keyboard to ack the char */
-  out_byte(PORT_B, val | KBIT);	/* strobe the bit high */
-  out_byte(PORT_B, val);	/* now strobe it low */
+  code = inb(KEYBD);	/* get the scan code for the key struck */
+  val = inb(PORT_B);	/* strobe the keyboard to ack the char */
+  outb(PORT_B, val | KBIT);	/* strobe the bit high */
+  outb(PORT_B, val);	/* now strobe it low */
   return code;
 }
 
@@ -462,7 +462,7 @@ int how;		/* 0 = halt, 1 = reboot, 2 = panic!, ... */
   struct tasktab *ttp;
 
   /* Mask all interrupts. */
-  out_byte(INT_CTLMASK, ~0);
+  outb(INT_CTLMASK, ~0);
 
   /* Tell several tasks to stop. */
   cons_stop();
@@ -504,8 +504,8 @@ int how;		/* 0 = halt, 1 = reboot, 2 = panic!, ... */
   if (mon_return && how != RBT_RESET) {
 	/* Reinitialize the interrupt controllers to the BIOS defaults. */
 	intr_init(0);
-	out_byte(INT_CTLMASK, 0);
-	out_byte(INT2_CTLMASK, 0);
+	outb(INT_CTLMASK, 0);
+	outb(INT2_CTLMASK, 0);
 
 	/* Return to the boot monitor. */
 	if (how == RBT_HALT) {

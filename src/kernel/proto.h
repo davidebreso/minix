@@ -148,15 +148,11 @@ _PROTOTYPE( void wreboot, (int how)					);
 _PROTOTYPE( void int86, (void)						);
 _PROTOTYPE( void cp_mess, (int src,phys_clicks src_clicks,vir_bytes src_offset,
 		phys_clicks dst_clicks, vir_bytes dst_offset)		);
-_PROTOTYPE( int in_byte, (port_t port)					);
-_PROTOTYPE( int in_word, (port_t port)					);
 _PROTOTYPE( void lock, (void)						);
 _PROTOTYPE( void unlock, (void)						);
 _PROTOTYPE( void enable_irq, (unsigned irq)				);
 _PROTOTYPE( int disable_irq, (unsigned irq)				);
 _PROTOTYPE( u16_t mem_rdw, (segm_t segm, vir_bytes offset)		);
-_PROTOTYPE( void out_byte, (port_t port, int value)			);
-_PROTOTYPE( void out_word, (port_t port, int value)			);
 _PROTOTYPE( void phys_copy, (phys_bytes source, phys_bytes dest,
 		phys_bytes count)					);
 _PROTOTYPE( void port_read, (unsigned port, phys_bytes destination,

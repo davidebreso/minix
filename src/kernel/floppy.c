@@ -543,7 +543,7 @@ PRIVATE int f_finish()
 		}
 
 		/* Set the data rate */
-		if (pc_at) out_byte(FDC_RATE, rate[d]);
+		if (pc_at) outb(FDC_RATE, rate[d]);
 
 		/* If we are going to a new cylinder, perform a seek. */
 		r = seek(fp);
@@ -647,15 +647,15 @@ struct trans *tp;		/* pointer to the transfer struct */
   /* Set up the DMA registers.  (The comment on the reset is a bit strong,
    * it probably only resets the floppy channel.)
    */
-  out_byte(DMA_INIT, DMA_RESET_VAL);    /* reset the dma controller */
-  out_byte(DMA_FLIPFLOP, 0);		/* write anything to reset it */
-  out_byte(DMA_MODE, f_opcode == DEV_WRITE ? DMA_WRITE : DMA_READ);
-  out_byte(DMA_ADDR, (int) tp->tr_dma >>  0);
-  out_byte(DMA_ADDR, (int) tp->tr_dma >>  8);
-  out_byte(DMA_TOP, (int) (tp->tr_dma >> 16));
-  out_byte(DMA_COUNT, (tp->tr_count - 1) >> 0);
-  out_byte(DMA_COUNT, (tp->tr_count - 1) >> 8);
-  out_byte(DMA_INIT, 2);	/* some sort of enable */
+  outb(DMA_INIT, DMA_RESET_VAL);    /* reset the dma controller */
+  outb(DMA_FLIPFLOP, 0);		/* write anything to reset it */
+  outb(DMA_MODE, f_opcode == DEV_WRITE ? DMA_WRITE : DMA_READ);
+  outb(DMA_ADDR, (int) tp->tr_dma >>  0);
+  outb(DMA_ADDR, (int) tp->tr_dma >>  8);
+  outb(DMA_TOP, (int) (tp->tr_dma >> 16));
+  outb(DMA_COUNT, (tp->tr_count - 1) >> 0);
+  outb(DMA_COUNT, (tp->tr_count - 1) >> 8);
+  outb(DMA_INIT, 2);	/* some sort of enable */
 }
 
 
@@ -684,7 +684,7 @@ PRIVATE void start_motor()
   running = motor_status & motor_bit;	/* nonzero if this motor is running */
   motor_goal = motor_status | motor_bit;/* want this drive running too */
 
-  out_byte(DOR, (motor_goal << MOTOR_SHIFT) | ENABLE_INT | f_drive);
+  outb(DOR, (motor_goal << MOTOR_SHIFT) | ENABLE_INT | f_drive);
   motor_status = motor_goal;
 
   /* If the motor was already running, we don't have to wait for it. */
@@ -705,7 +705,7 @@ PRIVATE void stop_motor()
  */
 
   if (motor_goal != motor_status) {
-	out_byte(DOR, (motor_goal << MOTOR_SHIFT) | ENABLE_INT);
+	outb(DOR, (motor_goal << MOTOR_SHIFT) | ENABLE_INT);
 	motor_status = motor_goal;
   }
 }
@@ -855,10 +855,10 @@ PRIVATE int fdc_results()
 	 * bit must be set instead of clear, but the CTL_BUSY bit destroys
 	 * the perfection of the mirror.
 	 */
-	status = in_byte(FDC_STATUS) & (MASTER | DIRECTION | CTL_BUSY);
+	status = inb(FDC_STATUS) & (MASTER | DIRECTION | CTL_BUSY);
 	if (status == (MASTER | DIRECTION | CTL_BUSY)) {
 		if (result_nr >= MAX_RESULTS) break;	/* too many results */
-		f_results[result_nr++] = in_byte(FDC_DATA);
+		f_results[result_nr++] = inb(FDC_DATA);
 		continue;
 	}
 	if (status == MASTER) {	/* all read */
@@ -902,14 +902,14 @@ int val;		/* write this byte to floppy disk controller */
 
   /* It may take several tries to get the FDC to accept a command. */
   milli_start(&ms);
-  while ((in_byte(FDC_STATUS) & (MASTER | DIRECTION)) != (MASTER | 0)) {
+  while ((inb(FDC_STATUS) & (MASTER | DIRECTION)) != (MASTER | 0)) {
 	if (milli_elapsed(&ms) >= TIMEOUT) {
 		/* Controller is not listening.  Hit it over the head. */
 		need_reset = TRUE;
 		return;
 	}
   }
-  out_byte(FDC_DATA, val);
+  outb(FDC_DATA, val);
 }
 
 
@@ -981,8 +981,8 @@ PRIVATE void f_reset()
   lock();
   motor_status = 0;
   motor_goal = 0;
-  out_byte(DOR, 0);		/* strobe reset bit low */
-  out_byte(DOR, ENABLE_INT);	/* strobe it high again */
+  outb(DOR, 0);		/* strobe reset bit low */
+  outb(DOR, ENABLE_INT);	/* strobe it high again */
   unlock();
   receive(HARDWARE, &mess);	/* collect the RESET interrupt */
 

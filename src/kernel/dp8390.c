@@ -963,7 +963,23 @@ dpeth_t *dep;
 		length = (header.dr_rbcl | (header.dr_rbch << 8)) -
 			sizeof(dp_rcvhdr_t);
 		next = header.dr_next;
-		if (length < 60 || length > 1514)
+		if (!(header.dr_status & RSR_PRX))
+		{
+			printf("%s: receive error %02x, resetting receive buffer\n",
+				dep->de_name, header.dr_status);
+			dep->de_stat.ets_recvErr++;
+			next = curr;
+		}
+		else if (header.dr_status & ~(RSR_PHY | RSR_PRX))
+		{
+			/* This is very serious, so we issue a warning and
+			 * reset the buffers */
+			printf("%s: bad status %02x, resetting receive buffer\n",
+				dep->de_name, header.dr_status);
+			dep->de_stat.ets_fifoOver++;
+			next = curr;
+		}
+		else if (length < 60 || length > 1514)
 		{
 			printf("%s: packet with strange length arrived: %d\n",
 				dep->de_name, (int) length);
@@ -991,17 +1007,7 @@ dpeth_t *dep;
 			dep->de_stat.ets_packetR++;
 			next = curr;
 		}
-		else if (header.dr_status & RSR_FO)
-		{
-			/* This is very serious, so we issue a warning and
-			 * reset the buffers */
-			printf("%s: fifo overrun, resetting receive buffer\n",
-				dep->de_name);
-			dep->de_stat.ets_fifoOver++;
-			next = curr;
-		}
-		else if ((header.dr_status & RSR_PRX) &&
-					   (dep->de_flags & DEF_ENABLED))
+		else if (dep->de_flags & DEF_ENABLED)
 		{
 			r = dp_pkt2user(dep, pageno, length);
 			if (r != OK)
@@ -1087,8 +1093,7 @@ void *dst;
 	outb_reg0(dep, DP_RSAR1, offset >> 8);
 	outb_reg0(dep, DP_CR, CR_DM_RR | CR_PS_P0 | CR_STA);
 
-	for (i= 0; i<size; i++)
-		ha[i]= in_byte(dep->de_data_port);
+	rep_inb(dep->de_data_port, ha, size);
 }
 
 
@@ -1113,10 +1118,7 @@ void *dst;
 	outb_reg0(dep, DP_RSAR1, offset >> 8);
 	outb_reg0(dep, DP_CR, CR_DM_RR | CR_PS_P0 | CR_STA);
 
-	assert (!(size & 1));
-	size /= 2;
-	for (i= 0; i<size; i++)
-		ha[i]= in_word(dep->de_data_port);
+	rep_inw(dep->de_data_port, ha, size);
 }
 
 

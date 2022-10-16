@@ -54,12 +54,16 @@ _outw:
 _rep_inb:
 	push	bp
 	mov	bp, sp
+	cld
 	push	di
 	mov	dx, 4(bp)		! port
 	mov	di, 6(bp)		! buf
 	mov	cx, 8(bp)		! byte count
-    rep	inb	dx			! input many bytes
-	pop	di
+	jcxz	1f
+0:	inb	dx			! input 1 byte
+	stosb				! write 1 byte
+	loop	0b			! many times
+1:	pop	di
 	pop	bp
 	ret
 
@@ -67,13 +71,17 @@ _rep_inb:
 _rep_inw:
 	push	bp
 	mov	bp, sp
+	cld
 	push	di
 	mov	dx, 4(bp)		! port
 	mov	di, 6(bp)		! buf
 	mov	cx, 8(bp)		! byte count
 	shr	cx, #1			! word count
-    rep	in	dx			! input many words
-	pop	di
+ 	jcxz	1f
+0:	in	dx			! input 1 word
+	stosw				! write 1 byte
+	loop	0b			! many times
+1:	pop	di
 	pop	bp
 	ret
 
@@ -81,12 +89,16 @@ _rep_inw:
 _rep_outb:
 	push	bp
 	mov	bp, sp
+	cld
 	push	si
 	mov	dx, 4(bp)		! port
 	mov	si, 6(bp)		! buf
 	mov	cx, 8(bp)		! byte count
-    rep	outb	dx			! output many bytes
-	pop	si
+	jcxz	1f
+0:	lodsb				! read 1 byte
+	outb	dx			! output 1 byte
+	loop	0b			! many times
+1:	pop	si
 	pop	bp
 	ret
 
@@ -94,13 +106,17 @@ _rep_outb:
 _rep_outw:
 	push	bp
 	mov	bp, sp
+	cld
 	push	si
 	mov	dx, 4(bp)		! port
 	mov	si, 6(bp)		! buf
 	mov	cx, 8(bp)		! byte count
 	shr	cx, #1			! word count
-    rep	out	dx			! output many words
-	pop	si
+	jcxz	1f
+0:	lodsw				! read 1 word
+	out	dx			! output 1 word
+	loop	0b			! many times
+1:	pop	si
 	pop	bp
 	ret
 

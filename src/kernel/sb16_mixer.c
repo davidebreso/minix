@@ -195,9 +195,9 @@ int data;
 {
   int i;
 
-  out_byte(MIXER_REG, reg);
+  outb(MIXER_REG, reg);
   for(i=0;i<100;i++);
-  out_byte(MIXER_DATA, data);
+  outb(MIXER_DATA, data);
 
   return OK;
 }  
@@ -211,9 +211,9 @@ int reg;
 {
   int i;
 
-  out_byte(MIXER_REG, reg);
+  outb(MIXER_REG, reg);
   for(i=0;i<100;i++);
-  return (in_byte(MIXER_DATA) & 0xff);
+  return (inb(MIXER_DATA) & 0xff);
 }  
 
 

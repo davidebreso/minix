@@ -33,17 +33,17 @@ PUBLIC void umb_init()
     /* Enables "flash write operations" by writing the magic sequence
      * 0x057 0x0A8 to the FMWP register.
      */
-     reg = in_byte(regbase);	/* Read configuration register 		*/
+     reg = inb(regbase);	/* Read configuration register 		*/
      reg |= 0xC0;		/* Select register page 3		*/
-     out_byte(regbase, reg);
-     reg = in_byte(regbase+1);	/* Read command register (regbase+1)	*/
+     outb(regbase, reg);
+     reg = inb(regbase+1);	/* Read command register (regbase+1)	*/
      reg |= 0xC0;		/* Set config register write enable	*/
-     out_byte(regbase+1, reg);
-     out_byte(regbase+0xC, 0x57);	/* Write magic sequence to	*/
-     out_byte(regbase+0xC, 0xA8);	/* FMWP register		*/
-     reg = in_byte(regbase+1);	/* Read command register (regbase + 1)	*/
+     outb(regbase+1, reg);
+     outb(regbase+0xC, 0x57);	/* Write magic sequence to	*/
+     outb(regbase+0xC, 0xA8);	/* FMWP register		*/
+     reg = inb(regbase+1);	/* Read command register (regbase + 1)	*/
      reg &= 0x3F;		/* Disable config register writes	*/
-     out_byte(regbase+1, reg);
+     outb(regbase+1, reg);
   }
 }
 #endif /* ENABLE_RTL_UMB */

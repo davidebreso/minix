@@ -419,13 +419,13 @@ unsigned count;			/* bytes to transfer */
  */
 
   /* Set up the DMA registers. */
-  out_byte(DMA_FLIPFLOP, 0);		/* write anything to reset it */
-  out_byte(DMA_MODE, w_opcode == DEV_WRITE ? DMA_WRITE : DMA_READ);
-  out_byte(DMA_ADDR, (int) tp->tr_dma >>  0);
-  out_byte(DMA_ADDR, (int) tp->tr_dma >>  8);
-  out_byte(DMA_TOP, (int) (tp->tr_dma >> 16));
-  out_byte(DMA_COUNT, (count - 1) >> 0);
-  out_byte(DMA_COUNT, (count - 1) >> 8);
+  outb(DMA_FLIPFLOP, 0);		/* write anything to reset it */
+  outb(DMA_MODE, w_opcode == DEV_WRITE ? DMA_WRITE : DMA_READ);
+  outb(DMA_ADDR, (int) tp->tr_dma >>  0);
+  outb(DMA_ADDR, (int) tp->tr_dma >>  8);
+  outb(DMA_TOP, (int) (tp->tr_dma >> 16));
+  outb(DMA_COUNT, (count - 1) >> 0);
+  outb(DMA_COUNT, (count - 1) >> 8);
 }
 
 
@@ -457,7 +457,7 @@ unsigned count;			/* transferring count bytes */
   if (com_out(DMA_INT, command) != OK)
 	return(ERR);
 
-  out_byte(DMA_INIT, 3);	/* initialize DMA */
+  outb(DMA_INIT, 3);	/* initialize DMA */
 
   /* Block, waiting for disk interrupt. */
   receive(HARDWARE, &mess);
@@ -483,8 +483,8 @@ PRIVATE int win_results()
   int i, status;
   u8_t command[6];
 
-  status = in_byte(WIN_DATA);
-  out_byte(WIN_DMA, 0);
+  status = inb(WIN_DATA);
+  outb(WIN_DMA, 0);
   if (!(status & 2))		/* Test "error" bit */
 	return(OK);
   command[0] = WIN_SENSE;
@@ -496,13 +496,13 @@ PRIVATE int win_results()
   for (i = 0; i < MAX_RESULTS; i++) {
 	if (hd_wait(WST_REQ) != OK)
 		return(ERR);
-	status = in_byte(WIN_DATA);
+	status = inb(WIN_DATA);
 	w_results[i] = status & BYTE;
   }
   if (hd_wait(WST_REQ) != OK)	/* Missing from			*/
 	 return (ERR);		/* Original.  11-Apr-87 G.O.	*/
 
-  status = in_byte(WIN_DATA);	 /* Read "error" flag */
+  status = inb(WIN_DATA);	 /* Read "error" flag */
 
   if (((status & 2) != 0) || (w_results[0] & 0x3F)) {
 	return(ERR);
@@ -526,10 +526,10 @@ int val;		/* write this byte to winchester disk controller */
   if (w_need_reset) return;	/* if controller is not listening, return */
 
   do {
-	r = in_byte(WIN_STATUS);
+	r = inb(WIN_STATUS);
   } while((r & (WST_REQ | WST_BUSY)) == WST_BUSY);
 
-  out_byte(WIN_DATA, val);
+  outb(WIN_DATA, val);
 }
 
 
@@ -547,13 +547,13 @@ PRIVATE int w_reset()
   message mess;
 
   /* Strobe reset bit low. */
-  out_byte(WIN_STATUS, 0);
+  outb(WIN_STATUS, 0);
 
   milli_delay(5);	/* Wait for a while */
 
-  out_byte(WIN_SELECT, 0);	/* Issue select pulse */
+  outb(WIN_SELECT, 0);	/* Issue select pulse */
   for (i = 0; i < MAX_WIN_RETRY; i++) {
-	r = in_byte(WIN_STATUS);
+	r = inb(WIN_STATUS);
 	if (r & (WST_DRQ | WST_IRQ))
 		return(ERR);
 
@@ -602,10 +602,10 @@ int irq;
 
   int r, i;
 
-  out_byte(DMA_INIT, 0x07);	/* Disable int from DMA */
+  outb(DMA_INIT, 0x07);	/* Disable int from DMA */
 
   for (i = 0; i < MAX_WIN_RETRY; ++i) {
-	r = in_byte(WIN_STATUS);
+	r = inb(WIN_STATUS);
 	if (r & WST_IRQ)
 		break;		/* Exit if end of int */
   }
@@ -671,10 +671,10 @@ PRIVATE int check_init()
   int r, s;
 
   if (hd_wait(WST_REQ | WST_INPUT) == OK) {
-	r = in_byte(WIN_DATA);
+	r = inb(WIN_DATA);
 
 	do {
-		s = in_byte(WIN_STATUS);
+		s = inb(WIN_STATUS);
 	} while(s & WST_BUSY);		/* Loop while still busy */
 
 	if (r & 2)		/* Test error bit */
@@ -698,9 +698,9 @@ PRIVATE int read_ecc()
 
   command[0] = WIN_ECC_READ;
   if (com_out(NO_DMA_INT, command) == OK && hd_wait(WST_REQ) == OK) {
-	r = in_byte(WIN_DATA);
+	r = inb(WIN_DATA);
 	if (hd_wait(WST_REQ) == OK) {
-		r = in_byte(WIN_DATA);
+		r = inb(WIN_DATA);
 		if (r & 1)
 			w_need_reset = TRUE;
 	}
@@ -720,7 +720,7 @@ int bits;
   int r, i = 0;
 
   do {
-	r = in_byte(WIN_STATUS) & bits;
+	r = inb(WIN_STATUS) & bits;
   } while ((i++ < MAX_WIN_RETRY) && r != bits);		/* Wait for ALL bits */
 
   if (i >= MAX_WIN_RETRY) {
@@ -742,10 +742,10 @@ u8_t *commandp;
 
   int i, r;
 
-  out_byte(WIN_DMA, mode);
-  out_byte(WIN_SELECT, mode);
+  outb(WIN_DMA, mode);
+  outb(WIN_SELECT, mode);
   for (i = 0; i < MAX_WIN_RETRY; i++) {
-	r = in_byte(WIN_STATUS);
+	r = inb(WIN_STATUS);
 	if (r & WST_BUSY)
 		break;
   }
@@ -760,13 +760,13 @@ u8_t *commandp;
 	if (hd_wait(WST_REQ) != OK)
 		break;		/* No data request pending */
 
-	r = in_byte(WIN_STATUS);
+	r = inb(WIN_STATUS);
 
 	if ((r & (WST_BUSY | WST_BUS | WST_INPUT)) !=
 		(WST_BUSY | WST_BUS))
 		break;
 
-	out_byte(WIN_DATA, commandp[i]);
+	outb(WIN_DATA, commandp[i]);
   }
 
   if (i != 6)
@@ -797,7 +797,7 @@ PRIVATE void init_params()
   if (nr_drives > MAX_DRIVES) nr_drives = MAX_DRIVES;
 
   /* Read the switches from the controller */
-  w_switches = in_byte(WIN_SELECT);
+  w_switches = inb(WIN_SELECT);
 
 #if AUTO_BIOS
   /* If no auto configuration or not enabled then go to the ROM. */

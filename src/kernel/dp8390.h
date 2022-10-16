@@ -161,10 +161,10 @@ typedef struct dp_rcvhdr
 #define DP_PAGESIZE	256
 
 /* Some macros to simplify accessing the dp8390 */
-#define inb_reg0(dep, reg)	(in_byte(dep->de_dp8390_port+reg))
-#define outb_reg0(dep, reg, data) (out_byte(dep->de_dp8390_port+reg, data))
-#define inb_reg1(dep, reg)	(in_byte (dep->de_dp8390_port+reg))
-#define outb_reg1(dep, reg, data) (out_byte(dep->de_dp8390_port+reg, data))
+#define inb_reg0(dep, reg)	(inb(dep->de_dp8390_port+reg))
+#define outb_reg0(dep, reg, data) (outb(dep->de_dp8390_port+reg, data))
+#define inb_reg1(dep, reg)	(inb (dep->de_dp8390_port+reg))
+#define outb_reg1(dep, reg, data) (outb(dep->de_dp8390_port+reg, data))
 
 /* Software interface to the dp8390 driver */
 

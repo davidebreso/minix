@@ -326,7 +326,7 @@ int delay;		/* count to wait for the reply */
 
   if (mcd_ready(delay) != OK) return EIO;           /* wait for drive to 
                                                        become available */
-  *reply = in_byte(MCD_DATA_PORT);	/* get the reply */
+  *reply = inb(MCD_DATA_PORT);	/* get the reply */
   return OK;
 }
 
@@ -344,7 +344,7 @@ int delay;   /* count to wait for drive to become available again */
   milli_start(&ms);
   do
   {
-    if (!(in_byte(MCD_FLAG_PORT) & MCD_BUSY)) return OK; /* OK, drive ready */
+    if (!(inb(MCD_FLAG_PORT) & MCD_BUSY)) return OK; /* OK, drive ready */
   } while(milli_elapsed(&ms) < delay);
 
   return EIO; /* Timeout */
@@ -364,7 +364,7 @@ int delay;    	/* count to wait for the data */
   milli_start(&ms);
   do
   {
-    if (!(in_byte(MCD_FLAG_PORT) & 2)) return OK; /* OK, data is there */
+    if (!(inb(MCD_FLAG_PORT) & 2)) return OK; /* OK, data is there */
   } while(milli_elapsed(&ms) < delay);
 
   return EIO;  /* Timeout */
@@ -384,7 +384,7 @@ int f; 		/* flag */
   /* If f = 1, we first send a get_status command, otherwise we just get
      the status info from the drive */ 
 
-  if (f) out_byte(MCD_DATA_PORT, MCD_GET_STATUS);        /* Try to get status */
+  if (f) outb(MCD_DATA_PORT, MCD_GET_STATUS);        /* Try to get status */
   if (mcd_get_reply(&status,REPLY_DELAY) != OK) return -1; 
 
   McdStatus &= ~(NO_DISK | DISK_CHANGED | DISK_ERROR);
@@ -424,8 +424,8 @@ int mode; /* new drive mode */
 
   for (i = 0; i < MCD_RETRIES; i++)
   {
-    out_byte(MCD_DATA_PORT, MCD_SET_MODE); /* Send set mode command */
-    out_byte(MCD_DATA_PORT, mode);         /* Send which mode */
+    outb(MCD_DATA_PORT, MCD_SET_MODE); /* Send set mode command */
+    outb(MCD_DATA_PORT, mode);         /* Send which mode */
     if (mcd_get_status(0) != -1 &&
          !(McdStatus & DISK_ERROR)) break; 
   }
@@ -445,7 +445,7 @@ int command;  	/* command to send */
 
   for (i = 0; i < MCD_RETRIES; i++)
   {
-    out_byte(MCD_DATA_PORT, command);      /* send command */
+    outb(MCD_DATA_PORT, command);      /* send command */
     if (mcd_get_status(0) != -1 && 
          !(McdStatus & DISK_ERROR)) break; 
   }
@@ -473,9 +473,9 @@ PRIVATE int mcd_init()
   /* Reset the flag port and remove all pending data, if we do
    * not do this properly the drive won't cooperate.
    */
-  out_byte(MCD_FLAG_PORT, 0x00); 	
+  outb(MCD_FLAG_PORT, 0x00); 	
   for (n = 0; n < 1000000; n++)
-    (void) in_byte(MCD_FLAG_PORT);
+    (void) inb(MCD_FLAG_PORT);
 
   /* Now see if the drive will report its status */
   if (mcd_get_status(1) == -1)
@@ -486,11 +486,11 @@ PRIVATE int mcd_init()
   }
 
   /* Find out drive version */
-  out_byte(MCD_DATA_PORT, MCD_GET_VERSION);
+  outb(MCD_DATA_PORT, MCD_GET_VERSION);
   milli_start(&ms);
   for (i = 0; i < 3; i++)
   {
-    while (in_byte(MCD_FLAG_PORT) & MCD_BUSY)
+    while (inb(MCD_FLAG_PORT) & MCD_BUSY)
     {
       if (milli_elapsed(&ms) >= 1000) 
       {
@@ -498,7 +498,7 @@ PRIVATE int mcd_init()
 	return -1;
       }
     }
-    version[i] = in_byte(MCD_DATA_PORT);
+    version[i] = inb(MCD_DATA_PORT);
   }
  
   if (version[1] == 'D')
@@ -508,7 +508,7 @@ PRIVATE int mcd_init()
             version[0], version[1], version[2]);
 
   /* Newer drive models need this */
-  if (version[1] >= 4) out_byte(MCD_CONTROL_PORT, MCD_PICKLE);
+  if (version[1] >= 4) outb(MCD_CONTROL_PORT, MCD_PICKLE);
 
   /* Register interrupt vector and enable interrupt 
    * currently the interrupt is not used because
@@ -567,13 +567,13 @@ struct cd_play_mss mss;  /* from where to play minute:second.sector */
     lock();        /* No interrupts when we issue this command */
 
     /* Send command with paramters to drive */
-    out_byte(MCD_DATA_PORT, MCD_READ_FROM_TO);
-    out_byte(MCD_DATA_PORT, bin2bcd(mss.begin_mss[MINUTES]));
-    out_byte(MCD_DATA_PORT, bin2bcd(mss.begin_mss[SECONDS]));
-    out_byte(MCD_DATA_PORT, bin2bcd(mss.begin_mss[SECTOR]));
-    out_byte(MCD_DATA_PORT, bin2bcd(mss.end_mss[MINUTES]));
-    out_byte(MCD_DATA_PORT, bin2bcd(mss.end_mss[SECONDS]));
-    out_byte(MCD_DATA_PORT, bin2bcd(mss.end_mss[SECTOR]));
+    outb(MCD_DATA_PORT, MCD_READ_FROM_TO);
+    outb(MCD_DATA_PORT, bin2bcd(mss.begin_mss[MINUTES]));
+    outb(MCD_DATA_PORT, bin2bcd(mss.begin_mss[SECONDS]));
+    outb(MCD_DATA_PORT, bin2bcd(mss.begin_mss[SECTOR]));
+    outb(MCD_DATA_PORT, bin2bcd(mss.end_mss[MINUTES]));
+    outb(MCD_DATA_PORT, bin2bcd(mss.end_mss[SECONDS]));
+    outb(MCD_DATA_PORT, bin2bcd(mss.end_mss[SECTOR]));
 
     unlock();	   /* Enable interrupts again */
 
@@ -1143,13 +1143,13 @@ PRIVATE int mcd_finish()
     while (errors < MCD_RETRIES) 
     {
       lock();
-      out_byte(MCD_DATA_PORT, MCD_READ_FROM_TO);
-      out_byte(MCD_DATA_PORT, bin2bcd(mss[MINUTES])); 
-      out_byte(MCD_DATA_PORT, bin2bcd(mss[SECONDS])); 
-      out_byte(MCD_DATA_PORT, bin2bcd(mss[SECTOR])); 
-      out_byte(MCD_DATA_PORT, 0); 
-      out_byte(MCD_DATA_PORT, 0); 
-      out_byte(MCD_DATA_PORT, 1); 	/* XXX count in mss form? */
+      outb(MCD_DATA_PORT, MCD_READ_FROM_TO);
+      outb(MCD_DATA_PORT, bin2bcd(mss[MINUTES])); 
+      outb(MCD_DATA_PORT, bin2bcd(mss[SECONDS])); 
+      outb(MCD_DATA_PORT, bin2bcd(mss[SECTOR])); 
+      outb(MCD_DATA_PORT, 0); 
+      outb(MCD_DATA_PORT, 0); 
+      outb(MCD_DATA_PORT, 1); 	/* XXX count in mss form? */
       unlock();
 
       /* Wait for data */
@@ -1160,7 +1160,7 @@ PRIVATE int mcd_finish()
     if (errors == MCD_RETRIES) return(tp->tr_iop->io_nbytes = EIO);
 
     /* Prepare reading data. */
-    out_byte(MCD_CONTROL_PORT, 0x04);
+    outb(MCD_CONTROL_PORT, 0x04);
 
     while (pos < tp->tr_pos)
     {
@@ -1208,7 +1208,7 @@ count, n, 0, 0, 0, mcd_count);
     }
 
     /* Finish reading data. */
-    out_byte(MCD_CONTROL_PORT, 0x0c);
+    outb(MCD_CONTROL_PORT, 0x0c);
 #if 0 /*XXX*/
     mcd_get_status(1);
     if (!(McdStatus & DISK_ERROR)) done = 1; /* OK, no errors */

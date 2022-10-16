@@ -52,18 +52,18 @@ int mine;
 	 * one slaved at IRQ 2.  (We don't have to deal with the PC that
 	 * has just one controller, because it must run in real mode.)
 	 */
-	out_byte(INT_CTL, ps_mca ? ICW1_PS : ICW1_AT);
-	out_byte(INT_CTLMASK, mine ? IRQ0_VECTOR : BIOS_IRQ0_VEC);
+	outb(INT_CTL, ps_mca ? ICW1_PS : ICW1_AT);
+	outb(INT_CTLMASK, mine ? IRQ0_VECTOR : BIOS_IRQ0_VEC);
 							/* ICW2 for master */
-	out_byte(INT_CTLMASK, (1 << CASCADE_IRQ));	/* ICW3 tells slaves */
-	out_byte(INT_CTLMASK, ICW4_AT);
-	out_byte(INT_CTLMASK, ~(1 << CASCADE_IRQ));	/* IRQ 0-7 mask */
-	out_byte(INT2_CTL, ps_mca ? ICW1_PS : ICW1_AT);
-	out_byte(INT2_CTLMASK, mine ? IRQ8_VECTOR : BIOS_IRQ8_VEC);
+	outb(INT_CTLMASK, (1 << CASCADE_IRQ));	/* ICW3 tells slaves */
+	outb(INT_CTLMASK, ICW4_AT);
+	outb(INT_CTLMASK, ~(1 << CASCADE_IRQ));	/* IRQ 0-7 mask */
+	outb(INT2_CTL, ps_mca ? ICW1_PS : ICW1_AT);
+	outb(INT2_CTLMASK, mine ? IRQ8_VECTOR : BIOS_IRQ8_VEC);
 							/* ICW2 for slave */
-	out_byte(INT2_CTLMASK, CASCADE_IRQ);		/* ICW3 is slave nr */
-	out_byte(INT2_CTLMASK, ICW4_AT);
-	out_byte(INT2_CTLMASK, ~0);			/* IRQ 8-15 mask */
+	outb(INT2_CTLMASK, CASCADE_IRQ);		/* ICW3 is slave nr */
+	outb(INT2_CTLMASK, ICW4_AT);
+	outb(INT2_CTLMASK, ~0);			/* IRQ 8-15 mask */
 
 	/* Copy the BIOS vectors from the BIOS to the Minix location, so we
 	 * can still make BIOS calls without reprogramming the i8259s.
